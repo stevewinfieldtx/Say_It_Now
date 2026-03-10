@@ -1694,7 +1694,9 @@ export default function SayItNow() {
   const [currentPhrase, setCurrentPhrase] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [nativeLang, setNativeLang] = useState("en");
   const [showLangPicker, setShowLangPicker] = useState(false);
+  const [showNativePicker, setShowNativePicker] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [speakingWord, setSpeakingWord] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
