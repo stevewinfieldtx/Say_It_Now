@@ -20,26 +20,27 @@ export async function POST(req: NextRequest) {
     : mimeType?.includes("wav") ? "wav"
     : "webm";
 
-  // Build FormData for Whisper via OpenRouter
+  // Build FormData for Groq Whisper
   const formData = new FormData();
   const blob = new Blob([bytes], { type: mimeType || "audio/webm" });
   formData.append("file", blob, `audio.${ext}`);
-  formData.append("model", "openai/whisper-1");
+  formData.append("model", "whisper-large-v3-turbo");
+  formData.append("response_format", "json");
   if (language) {
     formData.append("language", language);
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/audio/transcriptions", {
+  const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
     },
     body: formData,
   });
 
   if (!response.ok) {
     const err = await response.text();
-    console.error("Whisper error:", err);
+    console.error("Groq Whisper error:", err);
     return NextResponse.json({ error: "Transcription failed", detail: err }, { status: 500 });
   }
 
