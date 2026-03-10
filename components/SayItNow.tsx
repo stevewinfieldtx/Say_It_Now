@@ -1665,6 +1665,23 @@ const QUICK_PHRASES = [
   "one more please",
 ];
 
+// Map our language codes to BCP-47 locale codes for speech synthesis
+const SPEECH_LOCALE: Record<string, string> = {
+  vi: "vi-VN",
+  th: "th-TH",
+  ja: "ja-JP",
+  ko: "ko-KR",
+  zh: "zh-CN",
+  es: "es-ES",
+  de: "de-DE",
+  nl: "nl-NL",
+  fr: "fr-FR",
+  pt: "pt-BR",
+  it: "it-IT",
+  ar: "ar-SA",
+  hi: "hi-IN",
+};
+
 export default function SayItNow() {
   const [lang, setLang] = useState("vi");
   const [input, setInput] = useState("");
@@ -1673,9 +1690,23 @@ export default function SayItNow() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showLangPicker, setShowLangPicker] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedLang = LANGUAGES.find((l) => l.code === lang)!;
+
+  const speakPhrase = (text: string, slow: boolean = true) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = SPEECH_LOCALE[lang] || "en-US";
+    utter.rate = slow ? 0.5 : 0.85;  // 0.5 = very slow, 0.85 = natural pace
+    utter.pitch = 1;
+    utter.onstart = () => setSpeaking(true);
+    utter.onend = () => setSpeaking(false);
+    utter.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utter);
+  };
 
   const getCached = (phrase: string, langCode: string): PhraseResult | null => {
     const langCache = PHRASE_CACHE[langCode];
@@ -1820,8 +1851,51 @@ export default function SayItNow() {
               <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">
                 Say this in {selectedLang.flag} {selectedLang.name}
               </p>
-              <p className="text-3xl font-bold mb-2 leading-tight">{result.native}</p>
-              <p className="text-xl font-mono text-blue-400 tracking-wide">{result.phonetic}</p>
+
+              {/* Native script */}
+              <p className="text-3xl font-bold mb-1 leading-tight">{result.native}</p>
+
+              {/* Phonetic spelling */}
+              <p className="text-lg font-mono text-blue-400 tracking-wide mb-3">{result.phonetic}</p>
+
+              {/* Sounds-like summary — one per word */}
+              <div className="border-t border-slate-700 pt-3 mb-4 space-y-1">
+                {result.syllables.map((s, i) => (
+                  <div key={i} className="flex items-baseline gap-2 text-sm">
+                    <span className="font-bold text-white min-w-fit">{s.word}</span>
+                    <span className="text-slate-400">→</span>
+                    <span className="text-yellow-300">{s.soundsLike}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Hear It buttons */}
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={() => speakPhrase(result.native, true)}
+                  disabled={speaking}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:text-blue-400 transition text-sm font-semibold"
+                >
+                  <span className="text-base">{speaking ? "⏳" : "🔊"}</span>
+                  {speaking ? "Playing..." : "Hear it slowly"}
+                </button>
+                <button
+                  onClick={() => speakPhrase(result.native, false)}
+                  disabled={speaking}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 transition text-sm font-semibold"
+                >
+                  <span className="text-base">▶️</span>
+                  Natural speed
+                </button>
+                {speaking && (
+                  <button
+                    onClick={() => { window.speechSynthesis.cancel(); setSpeaking(false); }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-700 hover:bg-red-600 transition text-sm font-semibold"
+                  >
+                    ⏹ Stop
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Syllables */}
@@ -1831,22 +1905,20 @@ export default function SayItNow() {
                 {result.syllables.map((s, i) => {
                   const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
                   return (
-                    <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+                    <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+
+                      {/* Word + tone badge */}
                       <div className="flex justify-between items-start gap-2 flex-wrap">
-                        <div className="flex items-baseline gap-3">
-                          <span className="text-2xl font-bold text-gray-900">{s.word}</span>
-                          <span className="text-lg font-mono font-semibold" style={{ color: tone.color }}>{s.phonetic}</span>
-                        </div>
+                        <span className="text-2xl font-bold text-gray-900">{s.word}</span>
                         <span className="text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap" style={{ background: tone.color + "18", color: tone.color }}>
                           {tone.symbol} {tone.label} — {tone.desc}
                         </span>
                       </div>
 
-                      {/* THE KEY NEW ELEMENT — Sounds Like */}
-                      <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-                        <span className="text-base">🔊</span>
-                        <span className="text-sm font-semibold text-blue-900">Sounds like: </span>
-                        <span className="text-sm text-blue-800">{s.soundsLike}</span>
+                      {/* Sounds Like — the hero element */}
+                      <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+                        <span className="text-lg mt-0.5">🔊</span>
+                        <span className="text-base font-semibold text-blue-900 leading-snug">{s.soundsLike}</span>
                       </div>
 
                       <p className="text-sm text-gray-500"><span className="font-semibold text-gray-700">Means:</span> {s.meaning}</p>
