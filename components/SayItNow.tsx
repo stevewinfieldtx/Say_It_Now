@@ -51,6 +51,39 @@ interface PhraseResult {
 }
 
 
+const PHRASE_CATEGORIES = [
+  {
+    id: "greetings",
+    emoji: "🤝",
+    label: "Greetings & Basics",
+    phrases: ["hello","goodbye","thank you","thank you very much","please","excuse me","sorry","yes","no","you're welcome","my name is...","nice to meet you","how are you?","i'm fine, thank you","do you speak english?","i don't understand","can you speak slower?","cheers!","good morning","good night"],
+  },
+  {
+    id: "food",
+    emoji: "🍽️",
+    label: "Food & Dining",
+    phrases: ["the bill please","no ice","delicious","one more please","water please","no spicy","i am vegetarian","i am allergic to peanuts","no MSG please","what do you recommend?","a table for two","the menu please","do you have...","well done","medium rare","takeaway please","very delicious","no meat","no dairy","can i have the receipt?"],
+  },
+  {
+    id: "transport",
+    emoji: "🚕",
+    label: "Getting Around",
+    phrases: ["where is the bathroom?","how much is this?","how far is it?","turn left","turn right","go straight","stop here","take me to the airport","how much to the airport?","i want to go to...","where is the train station?","where is the bus stop?","i am lost","can you call a taxi?","wait here please","how long does it take?","is it far?","on the left","on the right","straight ahead"],
+  },
+  {
+    id: "shopping",
+    emoji: "🏨",
+    label: "Shopping & Hotels",
+    phrases: ["how much is this?","too expensive","do you have a discount?","i'll take it","do you have this in another size?","do you have this in another color?","can i try it on?","receipt please","do you accept credit card?","i have a reservation","check in please","check out please","what time is check out?","can i have a room?","is breakfast included?","the wifi password please","my room key please","can you help me?","i want a refund","is there a pharmacy nearby?"],
+  },
+  {
+    id: "emergency",
+    emoji: "🆘",
+    label: "Emergency & Health",
+    phrases: ["help!","call the police","call an ambulance","i need a doctor","i am sick","i have a fever","i have a stomach ache","i am in pain","i am allergic to...","where is the hospital?","where is the pharmacy?","i need medicine","please call this number","i have lost my passport","i have been robbed","i need help","is there a doctor nearby?","this is an emergency","please hurry","i don't feel well"],
+  },
+];
+
 // Map our language codes to BCP-47 locale codes for speech synthesis
 const SPEECH_LOCALE: Record<string, string> = {
   vi: "vi-VN",
