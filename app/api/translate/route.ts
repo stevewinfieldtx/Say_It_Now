@@ -7,33 +7,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const prompt = `You are a pronunciation coach helping an English speaker say phrases in ${languageName}.
+  const prompt = `You are a pronunciation coach helping an American English speaker say phrases in ${languageName}.
 
 Break down this phrase: "${phrase}"
+
+Your most important job is the "soundsLike" field. Every single sound must be anchored to a real, common English word or phrase that an American already knows. Never write letter combinations like "kohng" in isolation — always say WHAT English word it sounds like.
+
+Good examples of soundsLike:
+- 'like "Kong" in King Kong'
+- 'rhymes with "boy" and "toy"'
+- 'like "chow" as in chow down'
+- 'like "sin" in sinful'
+- 'like "hall" in hallway'
+- 'like "ten" — the number'
+- 'like "tea" + "en" = teen'
+- 'like the musical note "doh" in do-re-mi'
 
 Return ONLY valid JSON in this exact format:
 {
   "native": "the phrase in ${languageName} script",
-  "phonetic": "full phrase phonetic pronunciation using only English sounds and letters — no IPA symbols",
+  "phonetic": "full phrase phonetic using English letters only — no IPA",
   "syllables": [
     {
       "word": "each word in native script",
-      "phonetic": "English phonetic for this word only (e.g. 'kahm', 'nyee-ew')",
+      "phonetic": "phonetic spelling using English letters only",
+      "soundsLike": "REQUIRED — anchor to a real English word. Format: 'like X in Y' or 'rhymes with X and Y'",
       "meaning": "English meaning of this word",
       "tone": "one of exactly: rising, falling, flat, dipping, high, low, broken",
-      "tip": "1-2 sentence pronunciation tip comparing to English words or sounds the learner already knows"
+      "tip": "1-2 sentence tip that references the English anchor word to explain any differences"
     }
   ],
-  "fullTip": "2-3 sentence practical delivery tip. Include regional/dialect notes when relevant (e.g. Da Nang vs Hanoi for Vietnamese, Castilian vs Latin American for Spanish).",
-  "formal": "A more formal or polite version if one exists — format: 'Native script (phonetic) — brief explanation of when to use'. Return null if no meaningful difference exists."
+  "fullTip": "2-3 sentence practical tip. Include regional/dialect notes when relevant.",
+  "formal": "More formal version if meaningful — format: 'Native (phonetic) — when to use'. Return null if no real difference."
 }
 
 Rules:
-- Phonetics must use ONLY common English letter combinations. Never use IPA.
-- Tone must be exactly one of the 7 options: rising, falling, flat, dipping, high, low, broken
-- Tips should reference English words the learner already knows (e.g. 'like the word toy', 'rhymes with boy')
-- fullTip should be practical and conversational — like advice from a local friend
-- For tonal languages (Vietnamese, Thai, Mandarin, etc.) be very precise about tone direction`;
+- soundsLike is MANDATORY and must reference a real English word every American knows
+- Phonetics use ONLY English letters — never IPA symbols
+- Tone must be exactly one of the 7 options listed
+- For tonal languages, be very precise about tone direction`;
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
