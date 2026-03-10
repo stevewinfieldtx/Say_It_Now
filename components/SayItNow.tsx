@@ -800,15 +800,6 @@ const PHRASE_CACHE: CacheMap = {
       fullTip: "The go-to for genuine gratitude throughout Latin America and Spain. 'MOO-chas GRA-see-as' — stress on MOO and GRA.",
       formal: null,
     },
-    "hello": {
-      native: "Hola",
-      phonetic: "oh-lah",
-      syllables: [
-        { word: "Hola", phonetic: "oh-lah", soundsLike: 'like "oh-lah" — H is silent, always', meaning: "hello", tone: "flat", tip: "Silent H. Just OH-lah." },
-      ],
-      fullTip: "Universal Spanish greeting. H is always silent in Spanish.",
-      formal: "Buenos días (BWEH-nos DEE-as) — Good morning",
-    },
   },
 
   nl: {
