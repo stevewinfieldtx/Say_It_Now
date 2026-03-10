@@ -192,7 +192,7 @@ export default function SayItNow() {
   };
   return (
     <div className="min-h-screen bg-slate-50" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      <OnboardingModal nativeLang={nativeLang} />
+      <OnboardingModal nativeLang={nativeLang} onLanguageSelect={(lang) => setNativeLang(lang)} />
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-5 py-4 sticky top-0 z-50">
@@ -476,7 +476,7 @@ export default function SayItNow() {
                     <span className="text-2xl">{cat.emoji}</span>
                     <div className="text-left">
                       <p className="font-bold text-gray-900 text-sm">{t.categoryLabels?.[cat.id] || cat.label}</p>
-                      <p className="text-xs text-gray-400">{cat.phrases.length} phrases</p>
+                      <p className="text-xs text-gray-400">{cat.phrases.length} {t.phrasesLabel || "phrases"}</p>
                     </div>
                   </div>
                   <span className="text-gray-400 text-lg transition-transform duration-200" style={{ transform: openCategory === cat.id ? 'rotate(90deg)' : 'rotate(0deg)' }}>›</span>
