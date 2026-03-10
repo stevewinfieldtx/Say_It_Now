@@ -55,8 +55,8 @@ Rules:
       headers: {
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://say-it-now.vercel.app",
-        "X-Title": "Say It Now",
+        "HTTP-Referer": "https://howdoisay.app",
+        "X-Title": "How Do I Say",
       },
       body: JSON.stringify({
         model: process.env.OPENROUTER_MODEL_ID || "openai/gpt-4o-mini",

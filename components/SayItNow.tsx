@@ -16,6 +16,8 @@ const LANGUAGES = [
   { code: "it", name: "Italian", flag: "🇮🇹" },
   { code: "ar", name: "Arabic", flag: "🇸🇦" },
   { code: "hi", name: "Hindi", flag: "🇮🇳" },
+  { code: "uk", name: "Ukrainian", flag: "🇺🇦" },
+  { code: "ru", name: "Russian", flag: "🇷🇺" },
 ];
 
 const TONE_INFO: Record<string, { symbol: string; color: string; label: string; desc: string }> = {
@@ -1681,6 +1683,8 @@ const SPEECH_LOCALE: Record<string, string> = {
   it: "it-IT",
   ar: "ar-SA",
   hi: "hi-IN",
+  uk: "uk-UA",
+  ru: "ru-RU",
 };
 
 export default function SayItNow() {
@@ -1692,6 +1696,7 @@ export default function SayItNow() {
   const [error, setError] = useState("");
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [speakingWord, setSpeakingWord] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedLang = LANGUAGES.find((l) => l.code === lang)!;
@@ -1702,17 +1707,27 @@ export default function SayItNow() {
   const selectedNativeLang = NATIVE_LANGUAGES.find((l) => l.code === nativeLang)!;
   const t = UI_TEXT[nativeLang] || UI_TEXT["en"];
 
-  const speakPhrase = (text: string, slow: boolean = true) => {
+  const speakText = (text: string, slow: boolean = true, onDone?: () => void) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = SPEECH_LOCALE[lang] || "en-US";
-    utter.rate = slow ? 0.5 : 0.85;  // 0.5 = very slow, 0.85 = natural pace
+    utter.rate = slow ? 0.5 : 0.85;
     utter.pitch = 1;
     utter.onstart = () => setSpeaking(true);
-    utter.onend = () => setSpeaking(false);
-    utter.onerror = () => setSpeaking(false);
+    utter.onend = () => { setSpeaking(false); setSpeakingWord(null); onDone?.(); };
+    utter.onerror = () => { setSpeaking(false); setSpeakingWord(null); };
     window.speechSynthesis.speak(utter);
+  };
+
+  const speakPhrase = (text: string, slow: boolean = true) => {
+    setSpeakingWord(null);
+    speakText(text, slow);
+  };
+
+  const speakWord = (word: string, index: number) => {
+    setSpeakingWord(index);
+    speakText(word, true, () => setSpeakingWord(null));
   };
 
   const getCached = (phrase: string, langCode: string): PhraseResult | null => {
@@ -1782,7 +1797,7 @@ export default function SayItNow() {
 
           {/* App title */}
           <button onClick={goHome} className="text-left hover:opacity-70 transition mb-3 block">
-            <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Say It Now 🌏</h1>
+            <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">How Do I Say 🌏</h1>
             <p className="text-xs text-gray-500">{t.appTagline}</p>
           </button>
 
@@ -2039,7 +2054,7 @@ export default function SayItNow() {
       </div>
 
       <div className="text-center pb-8 pt-4 text-xs text-gray-400">
-        Say It Now — Speak confidently anywhere in the world 🌏
+        How Do I Say — Speak confidently anywhere in the world 🌏
       </div>
     </div>
   );

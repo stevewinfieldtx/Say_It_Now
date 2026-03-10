@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Say It Now",
+  title: "How Do I Say",
   description: "Speak any phrase in any language. No reading required.",
 };
 
