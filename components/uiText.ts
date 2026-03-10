@@ -1,4 +1,4 @@
-﻿// UI_TEXT — all interface strings translated by native language
+// UI_TEXT — all interface strings translated by native language
 // Add more languages here as needed
 
 export interface UIStrings {
@@ -240,14 +240,6 @@ const UI_TEXT: Record<string, UIStrings> = {
     literalLabel: "Nghĩa đen",
     tryAgainLabel: "Nghe lại",
     noSpeechSupportLabel: "Trình duyệt không hỗ trợ nhận dạng giọng nói. Hãy dùng Chrome.",
-    listenLabel: "👂 Escuchar su respuesta",
-    listeningLabel: "Escuchando — pueden hablar ahora",
-    stopLabel: "Listo",
-    theyHearLabel: "Ellos dijeron",
-    youUnderstandLabel: "Tú entiendes",
-    literalLabel: "Literalmente",
-    tryAgainLabel: "Escuchar de nuevo",
-    noSpeechSupportLabel: "Reconocimiento de voz no disponible en este navegador. Prueba Chrome.",
   },
 
   es: {
