@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import UI_TEXT from "./uiText";
 
 const LANGUAGES = [
   { code: "vi", name: "Vietnamese", flag: "🇻🇳" },
@@ -1694,6 +1695,12 @@ export default function SayItNow() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedLang = LANGUAGES.find((l) => l.code === lang)!;
+  const NATIVE_LANGUAGES = [
+    { code: "en", name: "English", flag: "🇺🇸" },
+    ...LANGUAGES,
+  ];
+  const selectedNativeLang = NATIVE_LANGUAGES.find((l) => l.code === nativeLang)!;
+  const t = UI_TEXT[nativeLang] || UI_TEXT["en"];
 
   const speakPhrase = (text: string, slow: boolean = true) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -1733,13 +1740,19 @@ export default function SayItNow() {
       const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phrase, targetLanguage: lang, languageName: selectedLang.name }),
+        body: JSON.stringify({
+          phrase,
+          targetLanguage: lang,
+          languageName: selectedLang.name,
+          nativeLanguage: nativeLang,
+          nativeLanguageName: selectedNativeLang.name,
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t.errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1765,40 +1778,81 @@ export default function SayItNow() {
 
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-5 py-4 sticky top-0 z-50">
-        <div className="max-w-xl mx-auto flex justify-between items-center">
-          <button onClick={goHome} className="text-left hover:opacity-70 transition">
+        <div className="max-w-xl mx-auto">
+
+          {/* App title */}
+          <button onClick={goHome} className="text-left hover:opacity-70 transition mb-3 block">
             <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Say It Now 🌏</h1>
-            <p className="text-xs text-gray-500">Speak any phrase. No reading required.</p>
+            <p className="text-xs text-gray-500">{t.appTagline}</p>
           </button>
 
-          <div className="relative">
-            <button
-              onClick={() => setShowLangPicker(!showLangPicker)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold shadow-sm hover:border-gray-400 transition"
-            >
-              <span className="text-xl">{selectedLang.flag}</span>
-              <span className="hidden sm:inline">{selectedLang.name}</span>
-              <span className="text-xs text-gray-400">▼</span>
-            </button>
+          {/* Two-picker row */}
+          <div className="flex items-end gap-3">
 
-            {showLangPicker && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowLangPicker(false)} />
-                <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-50 min-w-52 max-h-96 overflow-y-auto">
-                  {LANGUAGES.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => { setLang(l.code); setShowLangPicker(false); setResult(null); }}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-left hover:bg-slate-50 transition ${l.code === lang ? "bg-slate-100 font-bold" : ""}`}
-                    >
-                      <span className="text-lg">{l.flag}</span>
-                      {l.name}
-                      {l.code === lang && <span className="ml-auto text-blue-600">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+            {/* I speak (native) */}
+            <div className="relative flex-1">
+              <p className="text-xs font-semibold text-gray-400 mb-1">{t.iSpeak}</p>
+              <button
+                onClick={() => { setShowNativePicker(!showNativePicker); setShowLangPicker(false); }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-gray-200 bg-white text-sm font-semibold hover:border-blue-400 transition"
+              >
+                <span className="text-lg">{selectedNativeLang.flag}</span>
+                <span className="truncate">{selectedNativeLang.name}</span>
+                <span className="text-xs text-gray-400 ml-auto">▼</span>
+              </button>
+              {showNativePicker && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNativePicker(false)} />
+                  <div className="absolute left-0 top-16 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-50 min-w-52 max-h-80 overflow-y-auto">
+                    {NATIVE_LANGUAGES.map((l) => (
+                      <button
+                        key={l.code}
+                        onClick={() => { setNativeLang(l.code); setShowNativePicker(false); setResult(null); }}
+                        className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-left hover:bg-slate-50 transition ${l.code === nativeLang ? "bg-slate-100 font-bold" : ""}`}
+                      >
+                        <span className="text-lg">{l.flag}</span>
+                        {l.name}
+                        {l.code === nativeLang && <span className="ml-auto text-blue-600">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Arrow between pickers */}
+            <div className="text-gray-400 text-xl pb-2">→</div>
+
+            {/* I want to speak (target) */}
+            <div className="relative flex-1">
+              <p className="text-xs font-semibold text-gray-400 mb-1">{t.iWantToSpeak}</p>
+              <button
+                onClick={() => { setShowLangPicker(!showLangPicker); setShowNativePicker(false); }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-blue-500 bg-white text-sm font-semibold hover:border-blue-600 transition"
+              >
+                <span className="text-lg">{selectedLang.flag}</span>
+                <span className="truncate">{selectedLang.name}</span>
+                <span className="text-xs text-gray-400 ml-auto">▼</span>
+              </button>
+              {showLangPicker && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowLangPicker(false)} />
+                  <div className="absolute right-0 top-16 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-50 min-w-52 max-h-80 overflow-y-auto">
+                    {LANGUAGES.map((l) => (
+                      <button
+                        key={l.code}
+                        onClick={() => { setLang(l.code); setShowLangPicker(false); setResult(null); }}
+                        className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-left hover:bg-slate-50 transition ${l.code === lang ? "bg-slate-100 font-bold" : ""}`}
+                      >
+                        <span className="text-lg">{l.flag}</span>
+                        {l.name}
+                        {l.code === lang && <span className="ml-auto text-blue-600">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1814,7 +1868,7 @@ export default function SayItNow() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type any phrase in English..."
+              placeholder={t.placeholder}
               className="flex-1 px-5 py-4 text-base outline-none bg-transparent text-gray-900 placeholder-gray-400"
             />
             <button
@@ -1822,7 +1876,7 @@ export default function SayItNow() {
               disabled={!input.trim() || loading}
               className="px-6 bg-slate-900 text-white font-bold text-sm tracking-wide disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
             >
-              {loading ? "..." : "SAY IT →"}
+              {loading ? "..." : t.sayItButton}
             </button>
           </div>
         </form>
@@ -1834,7 +1888,7 @@ export default function SayItNow() {
         {loading && (
           <div className="text-center py-16">
             <div className="inline-block w-10 h-10 border-4 border-gray-200 border-t-slate-900 rounded-full animate-spin" />
-            <p className="mt-3 text-gray-500 text-sm">Generating breakdown for &quot;{currentPhrase}&quot;...</p>
+            <p className="mt-3 text-gray-500 text-sm">{t.generating}</p>
           </div>
         )}
 
@@ -1843,13 +1897,13 @@ export default function SayItNow() {
           <div className="space-y-4">
 
             <button onClick={goHome} className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition">
-              <span className="text-lg">←</span> Back to phrase list
+              {t.backToList}
             </button>
 
             {/* Hero */}
             <div className="bg-slate-900 text-white rounded-2xl p-6">
               <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">
-                Say this in {selectedLang.flag} {selectedLang.name}
+                {t.sayThisIn} {selectedLang.flag} {selectedLang.name}
               </p>
 
               {/* Native script */}
@@ -1877,7 +1931,7 @@ export default function SayItNow() {
                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:text-blue-400 transition text-sm font-semibold"
                 >
                   <span className="text-base">{speaking ? "⏳" : "🔊"}</span>
-                  {speaking ? "Playing..." : "Hear it slowly"}
+                  {speaking ? t.playing : t.hearSlowly}
                 </button>
                 <button
                   onClick={() => speakPhrase(result.native, false)}
@@ -1885,14 +1939,14 @@ export default function SayItNow() {
                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 transition text-sm font-semibold"
                 >
                   <span className="text-base">▶️</span>
-                  Natural speed
+                  {t.naturalSpeed}
                 </button>
                 {speaking && (
                   <button
                     onClick={() => { window.speechSynthesis.cancel(); setSpeaking(false); }}
                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-700 hover:bg-red-600 transition text-sm font-semibold"
                   >
-                    ⏹ Stop
+                    ⏹ {t.stop}
                   </button>
                 )}
               </div>
@@ -1900,7 +1954,7 @@ export default function SayItNow() {
 
             {/* Syllables */}
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Word-by-Word Breakdown</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">{t.wordByWord}</p>
               <div className="space-y-3">
                 {result.syllables.map((s, i) => {
                   const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
@@ -1911,7 +1965,7 @@ export default function SayItNow() {
                       <div className="flex justify-between items-start gap-2 flex-wrap">
                         <span className="text-2xl font-bold text-gray-900">{s.word}</span>
                         <span className="text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap" style={{ background: tone.color + "18", color: tone.color }}>
-                          {tone.symbol} {tone.label} — {tone.desc}
+                          {tone.symbol} {t.toneLabels[s.tone]?.label || tone.label} — {t.toneLabels[s.tone]?.desc || tone.desc}
                         </span>
                       </div>
 
@@ -1921,7 +1975,7 @@ export default function SayItNow() {
                         <span className="text-base font-semibold text-blue-900 leading-snug">{s.soundsLike}</span>
                       </div>
 
-                      <p className="text-sm text-gray-500"><span className="font-semibold text-gray-700">Means:</span> {s.meaning}</p>
+                      <p className="text-sm text-gray-500"><span className="font-semibold text-gray-700">{t.means}</span> {s.meaning}</p>
                       <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 leading-relaxed">💡 {s.tip}</p>
                     </div>
                   );
@@ -1933,7 +1987,7 @@ export default function SayItNow() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
               <span className="text-xl flex-shrink-0">🎯</span>
               <div>
-                <p className="text-sm font-bold text-amber-900 mb-1">Pro Tip</p>
+                <p className="text-sm font-bold text-amber-900 mb-1">{t.proTip}</p>
                 <p className="text-sm text-amber-800 leading-relaxed">{result.fullTip}</p>
               </div>
             </div>
@@ -1942,14 +1996,14 @@ export default function SayItNow() {
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex gap-3">
                 <span className="text-xl flex-shrink-0">🎩</span>
                 <div>
-                  <p className="text-sm font-bold text-green-900 mb-1">Formal / Polite Version</p>
+                  <p className="text-sm font-bold text-green-900 mb-1">{t.formalVersion}</p>
                   <p className="text-sm text-green-800 leading-relaxed">{result.formal}</p>
                 </div>
               </div>
             )}
 
             <button onClick={goHome} className="w-full py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
-              ← Back to phrase list
+              {t.backToList}
             </button>
           </div>
         )}
@@ -1958,7 +2012,7 @@ export default function SayItNow() {
         {!result && !loading && (
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
-              Quick Phrases — tap for instant breakdown
+              {t.quickPhrases}
             </p>
             <div className="grid gap-2">
               {QUICK_PHRASES.map((phrase) => (
@@ -1970,7 +2024,7 @@ export default function SayItNow() {
                   <span>{phrase}</span>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                     {isCached(phrase) && (
-                      <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">instant</span>
+                      <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">{t.instant}</span>
                     )}
                     <span className="text-gray-400">→</span>
                   </div>
@@ -1978,7 +2032,7 @@ export default function SayItNow() {
               ))}
             </div>
             <p className="text-xs text-gray-400 mt-4 text-center">
-              Custom phrases typed above are AI-generated on the fly
+              {t.customPhrasesNote}
             </p>
           </div>
         )}

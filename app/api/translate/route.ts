@@ -1,49 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { phrase, targetLanguage, languageName } = await req.json();
+  const { phrase, targetLanguage, languageName, nativeLanguageName } = await req.json();
 
   if (!phrase || !targetLanguage || !languageName) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const prompt = `You are a pronunciation coach helping an American English speaker say phrases in ${languageName}.
+  const nativeLangLabel = nativeLanguageName || "English";
+
+  const prompt = `You are a pronunciation coach helping a ${nativeLangLabel} speaker say phrases in ${languageName}.
 
 Break down this phrase: "${phrase}"
 
-Your most important job is the "soundsLike" field. Every single sound must be anchored to a real, common English word or phrase that an American already knows. Never write letter combinations like "kohng" in isolation — always say WHAT English word it sounds like.
+Your most important job is the "soundsLike" field. Every single sound must be anchored to a real, common ${nativeLangLabel} word or phrase that a native ${nativeLangLabel} speaker already knows. Never write phonetic letter combinations in isolation — always say WHAT ${nativeLangLabel} word it sounds like.
 
-Good examples of soundsLike:
-- 'like "Kong" in King Kong'
-- 'rhymes with "boy" and "toy"'
-- 'like "chow" as in chow down'
-- 'like "sin" in sinful'
-- 'like "hall" in hallway'
-- 'like "ten" — the number'
-- 'like "tea" + "en" = teen'
-- 'like the musical note "doh" in do-re-mi'
+For example, if the native language is Vietnamese, anchor sounds to Vietnamese words they already know.
+If the native language is Spanish, anchor sounds to Spanish words they already know.
+If the native language is English, anchor sounds to English words they already know.
+
+Good format examples (adapt the reference words to ${nativeLangLabel}):
+- 'sounds like [common ${nativeLangLabel} word]'
+- 'rhymes with [common ${nativeLangLabel} word]'
+- 'like the word [X] in ${nativeLangLabel}'
 
 Return ONLY valid JSON in this exact format:
 {
   "native": "the phrase in ${languageName} script",
-  "phonetic": "full phrase phonetic using English letters only — no IPA",
+  "phonetic": "full phrase phonetic — spell it out using letters from the ${nativeLangLabel} alphabet only, no IPA",
   "syllables": [
     {
-      "word": "each word in native script",
-      "phonetic": "phonetic spelling using English letters only",
-      "soundsLike": "REQUIRED — anchor to a real English word. Format: 'like X in Y' or 'rhymes with X and Y'",
-      "meaning": "English meaning of this word",
+      "word": "each word in native ${languageName} script",
+      "phonetic": "phonetic spelling using ${nativeLangLabel} letters only",
+      "soundsLike": "REQUIRED — anchor to a real ${nativeLangLabel} word the speaker already knows",
+      "meaning": "meaning of this word translated to ${nativeLangLabel}",
       "tone": "one of exactly: rising, falling, flat, dipping, high, low, broken",
-      "tip": "1-2 sentence tip that references the English anchor word to explain any differences"
+      "tip": "1-2 sentence tip in ${nativeLangLabel} referencing the anchor word to explain any differences"
     }
   ],
-  "fullTip": "2-3 sentence practical tip. Include regional/dialect notes when relevant.",
-  "formal": "More formal version if meaningful — format: 'Native (phonetic) — when to use'. Return null if no real difference."
+  "fullTip": "2-3 sentence practical delivery tip written in ${nativeLangLabel}. Include regional/dialect notes when relevant.",
+  "formal": "More formal version if meaningful, explanation written in ${nativeLangLabel}. Return null if no real difference."
 }
 
 Rules:
-- soundsLike is MANDATORY and must reference a real English word every American knows
-- Phonetics use ONLY English letters — never IPA symbols
+- ALL text in soundsLike, meaning, tip, fullTip, and formal fields must be written in ${nativeLangLabel}
+- soundsLike is MANDATORY and must reference a real word a ${nativeLangLabel} speaker knows
+- Phonetics use ONLY ${nativeLangLabel} letters — never IPA symbols
 - Tone must be exactly one of the 7 options listed
 - For tonal languages, be very precise about tone direction`;
 
