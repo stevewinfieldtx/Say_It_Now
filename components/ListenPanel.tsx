@@ -1,81 +1,15 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-// Web Speech API type declarations
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
-
-interface SpeechRecognition extends EventTarget {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  onstart: (() => void) | null;
-}
-
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  isFinal: boolean;
-  length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  [index: number]: SpeechRecognitionAlternative;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message: string;
-}
-
-// BCP-47 locale map for speech recognition (same as speech synthesis)
-const SPEECH_LOCALE: Record<string, string> = {
-  vi: "vi-VN",
-  th: "th-TH",
-  ja: "ja-JP",
-  ko: "ko-KR",
-  zh: "zh-CN",
-  es: "es-ES",
-  de: "de-DE",
-  nl: "nl-NL",
-  fr: "fr-FR",
-  pt: "pt-BR",
-  it: "it-IT",
-  ar: "ar-SA",
-  hi: "hi-IN",
-  uk: "uk-UA",
-  ru: "ru-RU",
-  en: "en-US",
+// ISO-639-1 language codes for Whisper (best accuracy when hinted)
+const WHISPER_LANG: Record<string, string> = {
+  vi: "vi", th: "th", ja: "ja", ko: "ko", zh: "zh",
+  es: "es", de: "de", nl: "nl", fr: "fr", pt: "pt",
+  it: "it", ar: "ar", hi: "hi", uk: "uk", ru: "ru", en: "en",
 };
 
 const TONE_EMOJI: Record<string, string> = {
-  friendly: "😊",
-  formal: "🤝",
-  neutral: "😐",
-  question: "🤔",
-  urgent: "⚡",
+  friendly: "😊", formal: "🤝", neutral: "😐", question: "🤔", urgent: "⚡",
 };
 
 const TONE_COLOR: Record<string, string> = {
@@ -95,13 +29,12 @@ interface ListenResult {
 }
 
 interface ListenPanelProps {
-  targetLang: string;          // the language THEY are speaking (e.g. "vi")
-  targetLangName: string;      // e.g. "Vietnamese"
-  targetLangFlag: string;      // e.g. "🇻🇳"
-  nativeLang: string;          // the language YOU speak (e.g. "en")
-  nativeLangName: string;      // e.g. "English"
-  nativeLangFlag: string;      // e.g. "🇺🇸"
-  // UI labels — passed in so we stay consistent with uiText system
+  targetLang: string;
+  targetLangName: string;
+  targetLangFlag: string;
+  nativeLang: string;
+  nativeLangName: string;
+  nativeLangFlag: string;
   listenLabel: string;
   listeningLabel: string;
   stopLabel: string;
@@ -112,7 +45,7 @@ interface ListenPanelProps {
   noSpeechSupportLabel: string;
 }
 
-type ListenState = "idle" | "listening" | "processing" | "result" | "error";
+type ListenState = "idle" | "recording" | "processing" | "result" | "error";
 
 export default function ListenPanel({
   targetLang,
@@ -128,97 +61,150 @@ export default function ListenPanel({
   youUnderstandLabel,
   literalLabel,
   tryAgainLabel,
-  noSpeechSupportLabel,
 }: ListenPanelProps) {
   const [state, setState] = useState<ListenState>("idle");
-  const [interimText, setInterimText] = useState("");
-  const [finalText, setFinalText] = useState("");
+  const [transcript, setTranscript] = useState("");
   const [result, setResult] = useState<ListenResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [manualText, setManualText] = useState("");
 
-  // Check browser support
-  const isSupported = typeof window !== "undefined" &&
-    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return () => {
-      recognitionRef.current?.abort();
+      stopRecording();
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  const startListening = () => {
-    if (!isSupported) return;
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognitionAPI();
-    recognition.lang = SPEECH_LOCALE[targetLang] || "en-US";
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-
-    recognitionRef.current = recognition;
-    setInterimText("");
-    setFinalText("");
-    setResult(null);
+  const startRecording = async () => {
     setErrorMsg("");
-    setState("listening");
+    setTranscript("");
+    setResult(null);
+    setRecordingSeconds(0);
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
-      let final = "";
-      for (let i = 0; i < event.results.length; i++) {
-        const res = event.results[i];
-        if (res.isFinal) {
-          final += res[0].transcript;
-        } else {
-          interim += res[0].transcript;
-        }
-      }
-      setInterimText(interim);
-      if (final) setFinalText(final);
-    };
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      if (event.error === "no-speech") {
-        setErrorMsg("No speech detected. Try again.");
-      } else if (event.error === "not-allowed") {
-        setErrorMsg("Microphone access denied. Please allow microphone access in your browser.");
+      // Pick best supported format
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "";
+
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mimeType || "audio/webm",
+        });
+        await transcribeAudio(audioBlob, mimeType || "audio/webm");
+      };
+
+      recorder.start(250); // collect chunks every 250ms
+      setState("recording");
+
+      // Timer display
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => {
+          if (s >= 59) {
+            // Auto-stop at 60s
+            handleStop();
+            return s;
+          }
+          return s + 1;
+        });
+      }, 1000);
+
+    } catch (err: unknown) {
+      const error = err as Error;
+      if (error?.name === "NotAllowedError") {
+        setErrorMsg("mic-denied");
       } else {
-        setErrorMsg(`Error: ${event.error}`);
+        setErrorMsg("mic-error");
       }
       setState("error");
-    };
-
-    recognition.onend = () => {
-      // If we got a final transcript, send it for translation
-      setFinalText((ft) => {
-        if (ft.trim()) {
-          translateResponse(ft.trim());
-        } else {
-          setState("idle");
-        }
-        return ft;
-      });
-    };
-
-    recognition.start();
+    }
   };
 
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-  };
-
-  const translateResponse = async (transcript: string) => {
+  const handleStop = () => {
+    stopRecording();
     setState("processing");
-    setInterimText("");
+  };
 
+  const transcribeAudio = async (blob: Blob, mimeType: string) => {
+    setState("processing");
+
+    try {
+      // Convert blob to base64
+      const arrayBuffer = await blob.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
+      let binary = "";
+      uint8.forEach((b) => (binary += String.fromCharCode(b)));
+      const base64 = btoa(binary);
+
+      const res = await fetch("/api/transcribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          audio: base64,
+          mimeType,
+          language: WHISPER_LANG[targetLang] || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (!data.transcript?.trim()) {
+        setErrorMsg("no-speech");
+        setState("error");
+        return;
+      }
+
+      setTranscript(data.transcript);
+      await translateTranscript(data.transcript);
+
+    } catch {
+      setErrorMsg("transcribe-error");
+      setState("error");
+    }
+  };
+
+  const translateTranscript = async (text: string) => {
     try {
       const res = await fetch("/api/listen-translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          transcript,
+          transcript: text,
           fromLanguage: targetLang,
           fromLanguageName: targetLangName,
           toLanguage: nativeLang,
@@ -231,95 +217,117 @@ export default function ListenPanel({
       setResult(data);
       setState("result");
     } catch {
-      setErrorMsg("Translation failed. Please try again.");
+      setErrorMsg("translate-error");
       setState("error");
     }
   };
 
   const reset = () => {
+    stopRecording();
     setState("idle");
     setResult(null);
-    setInterimText("");
-    setFinalText("");
+    setTranscript("");
     setErrorMsg("");
+    setRecordingSeconds(0);
+    setManualText("");
   };
 
-  if (!isSupported) {
-    return (
-      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center">
-        <p className="text-sm text-gray-500">🎤 {noSpeechSupportLabel}</p>
-      </div>
-    );
-  }
-
   const toneColorClass = result ? (TONE_COLOR[result.tone] || TONE_COLOR.neutral) : "";
+
+  const formatTime = (s: number) => `0:${s.toString().padStart(2, "0")}`;
 
   return (
     <div className="space-y-3">
 
-      {/* ── IDLE — big invite button ── */}
+      {/* ── IDLE ── */}
       {state === "idle" && (
-        <button
-          onClick={startListening}
-          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 transition-all group"
-        >
-          <span className="text-2xl group-hover:scale-110 transition-transform">👂</span>
-          <div className="text-left">
-            <p className="font-bold text-indigo-900 text-sm">{listenLabel}</p>
-            <p className="text-xs text-indigo-500">{targetLangFlag} {targetLangName} → {nativeLangFlag} {nativeLangName}</p>
+        <div className="space-y-2">
+          <button
+            onClick={startRecording}
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 transition-all group"
+          >
+            <span className="text-2xl group-hover:scale-110 transition-transform">👂</span>
+            <div className="text-left">
+              <p className="font-bold text-indigo-900 text-sm">{listenLabel}</p>
+              <p className="text-xs text-indigo-500">{targetLangFlag} {targetLangName} → {nativeLangFlag} {nativeLangName}</p>
+            </div>
+          </button>
+
+          {/* Manual fallback — always visible as secondary option */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={manualText}
+              onChange={(e) => setManualText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && manualText.trim() && translateTranscript(manualText.trim())}
+              placeholder={`Or type what they said in ${targetLangName}...`}
+              className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+            />
+            <button
+              onClick={() => { if (manualText.trim()) { setTranscript(manualText); translateTranscript(manualText.trim()); }}}
+              disabled={!manualText.trim()}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-xl text-sm font-bold transition"
+            >
+              →
+            </button>
           </div>
-        </button>
+        </div>
       )}
 
-      {/* ── LISTENING — animated mic + interim text ── */}
-      {state === "listening" && (
-        <div className="rounded-2xl border-2 border-indigo-400 bg-indigo-50 p-5 space-y-4">
+      {/* ── RECORDING ── */}
+      {state === "recording" && (
+        <div className="rounded-2xl border-2 border-red-400 bg-red-50 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Pulsing mic */}
               <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                  <span className="text-lg">🎤</span>
+                <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center">
+                  <span className="text-xl">🎤</span>
                 </div>
-                <div className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-40" />
+                <div className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-50" />
               </div>
               <div>
-                <p className="font-bold text-indigo-900 text-sm">{listeningLabel}</p>
-                <p className="text-xs text-indigo-500">{targetLangFlag} {targetLangName}</p>
+                <p className="font-bold text-red-900 text-sm">{listeningLabel}</p>
+                <p className="text-xs text-red-500">{targetLangFlag} {targetLangName} · {formatTime(recordingSeconds)}</p>
               </div>
             </div>
             <button
-              onClick={stopListening}
-              className="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-bold rounded-lg transition"
+              onClick={handleStop}
+              className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold rounded-xl transition"
             >
-              {stopLabel}
+              ⏹ {stopLabel}
             </button>
           </div>
-          {/* Interim transcript display */}
-          {(interimText || finalText) && (
-            <div className="bg-white rounded-xl p-3 border border-indigo-200 min-h-12">
-              <p className="text-sm text-gray-700 italic leading-relaxed">
-                {finalText || interimText}
-                {!finalText && interimText && (
-                  <span className="inline-block w-1 h-4 bg-indigo-400 ml-1 animate-pulse align-middle" />
-                )}
-              </p>
+          <div className="bg-white rounded-xl p-3 border border-red-200 text-center">
+            <p className="text-xs text-gray-400">Recording — let them speak, then tap Stop</p>
+            <div className="flex justify-center gap-1 mt-2">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-red-400 rounded-full animate-pulse"
+                  style={{
+                    height: `${12 + Math.sin(Date.now() / 200 + i) * 8}px`,
+                    animationDelay: `${i * 100}ms`,
+                  }}
+                />
+              ))}
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {/* ── PROCESSING ── */}
       {state === "processing" && (
-        <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-6 h-6 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" style={{ borderWidth: "3px" }} />
-            <p className="text-sm font-semibold text-indigo-900">Translating...</p>
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-full border-[3px] border-indigo-200 border-t-indigo-600 animate-spin flex-shrink-0" />
+            <p className="text-sm font-semibold text-indigo-900">
+              {transcript ? "Translating..." : "Transcribing with Whisper AI..."}
+            </p>
           </div>
-          {finalText && (
+          {transcript && (
             <div className="bg-white rounded-xl p-3 border border-indigo-200">
               <p className="text-xs text-gray-400 mb-1">{theyHearLabel}:</p>
-              <p className="text-sm text-gray-700 italic">&ldquo;{finalText}&rdquo;</p>
+              <p className="text-sm text-gray-700 italic">&ldquo;{transcript}&rdquo;</p>
             </div>
           )}
         </div>
@@ -328,14 +336,12 @@ export default function ListenPanel({
       {/* ── RESULT ── */}
       {state === "result" && result && (
         <div className={`rounded-2xl border-2 p-5 space-y-4 ${toneColorClass}`}>
-
-          {/* Header row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xl">{TONE_EMOJI[result.tone] || "💬"}</span>
               <div>
                 <p className="font-extrabold text-base leading-tight">{result.summary}</p>
-                <p className="text-xs opacity-60 capitalize">{result.tone} tone · {targetLangFlag} {targetLangName}</p>
+                <p className="text-xs opacity-60 capitalize">{result.tone} · {targetLangFlag} {targetLangName}</p>
               </div>
             </div>
             <button
@@ -347,7 +353,6 @@ export default function ListenPanel({
           </div>
 
           <div className="border-t border-current/10 pt-3 space-y-3">
-            {/* What they said (original) */}
             <div>
               <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-1">
                 {theyHearLabel} ({targetLangFlag} {targetLangName})
@@ -355,7 +360,6 @@ export default function ListenPanel({
               <p className="text-sm font-semibold opacity-80 italic">&ldquo;{result.original}&rdquo;</p>
             </div>
 
-            {/* Translation */}
             <div className="bg-white/70 rounded-xl p-4 border border-current/10">
               <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2">
                 {youUnderstandLabel} ({nativeLangFlag} {nativeLangName})
@@ -363,7 +367,6 @@ export default function ListenPanel({
               <p className="text-base font-bold leading-relaxed">{result.translation}</p>
             </div>
 
-            {/* Literal (if different) */}
             {result.literal && (
               <div className="bg-white/40 rounded-xl px-4 py-3 border border-current/10">
                 <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-1">{literalLabel}</p>
@@ -372,7 +375,6 @@ export default function ListenPanel({
             )}
           </div>
 
-          {/* Listen again */}
           <button
             onClick={reset}
             className="w-full py-2.5 bg-white/60 hover:bg-white/90 rounded-xl text-sm font-semibold border border-current/20 transition"
@@ -384,12 +386,40 @@ export default function ListenPanel({
 
       {/* ── ERROR ── */}
       {state === "error" && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
-          <p className="text-sm text-red-700">⚠️ {errorMsg}</p>
-          <button
-            onClick={reset}
-            className="text-sm font-semibold text-red-700 hover:text-red-900 underline"
-          >
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
+          {errorMsg === "mic-denied" && (
+            <>
+              <p className="text-sm font-bold text-amber-800">🎤 Microphone access denied</p>
+              <p className="text-sm text-amber-700">Allow microphone access in your browser settings and try again.</p>
+            </>
+          )}
+          {errorMsg === "no-speech" && (
+            <p className="text-sm text-amber-700">No speech detected. Try recording again or type what they said below.</p>
+          )}
+          {(errorMsg === "transcribe-error" || errorMsg === "translate-error" || errorMsg === "mic-error") && (
+            <p className="text-sm text-amber-700">Something went wrong. Try again or type what they said below.</p>
+          )}
+
+          {/* Manual fallback always shown on error */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={manualText}
+              onChange={(e) => setManualText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && manualText.trim() && translateTranscript(manualText.trim())}
+              placeholder={`Type what they said in ${targetLangName}...`}
+              className="flex-1 px-3 py-2 rounded-xl border border-amber-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+            />
+            <button
+              onClick={() => { if (manualText.trim()) { setTranscript(manualText); translateTranscript(manualText.trim()); }}}
+              disabled={!manualText.trim()}
+              className="px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:bg-amber-200 text-white rounded-xl text-sm font-bold transition"
+            >
+              →
+            </button>
+          </div>
+
+          <button onClick={reset} className="text-sm font-semibold text-amber-800 hover:text-amber-900 underline">
             {tryAgainLabel}
           </button>
         </div>
