@@ -1,14 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = "https://rkaejxquqkvrzfiunrqt.supabase.co";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY!;
 
 export async function POST(req: NextRequest) {
-  const { phrase, targetLanguage, languageName, nativeLanguageName } = await req.json();
+  const { phrase, targetLanguage, languageName, nativeLanguage, nativeLanguageName } = await req.json();
 
   if (!phrase || !targetLanguage || !languageName) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  const nativeLang = nativeLanguage || "en";
   const nativeLangLabel = nativeLanguageName || "English";
+  const phraseKey = phrase.toLowerCase().trim();
 
+  // ── 1. Check Supabase cache first ──────────────────────────────────────────
+  try {
+    const readClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data } = await readClient
+      .from("howdoisay_phrase_cache")
+      .select("result")
+      .eq("phrase", phraseKey)
+      .eq("target_lang", targetLanguage)
+      .eq("native_lang", nativeLang)
+      .single();
+
+    if (data?.result) {
+      return NextResponse.json(data.result);
+    }
+  } catch {
+    // Cache miss or error — fall through to AI
+  }
+
+  // ── 2. Generate with OpenRouter ────────────────────────────────────────────
   const prompt = `You are a pronunciation coach helping a ${nativeLangLabel} speaker say phrases in ${languageName}.
 
 Break down this phrase: "${phrase}"
@@ -49,34 +75,50 @@ Rules:
 - Tone must be exactly one of the 7 options listed
 - For tonal languages, be very precise about tone direction`;
 
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://howdoisay.app",
-        "X-Title": "How Do I Say",
-      },
-      body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL_ID || "openai/gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-      }),
-    });
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://howdoisay.app",
+      "X-Title": "How Do I Say",
+    },
+    body: JSON.stringify({
+      model: process.env.OPENROUTER_MODEL_ID || "openai/gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    }),
+  });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
 
-    if (!content) {
-      return NextResponse.json({ error: "No response from AI" }, { status: 500 });
-    }
-
-    const parsed = JSON.parse(content);
-    return NextResponse.json(parsed);
-  } catch (err) {
-    console.error("Translation error:", err);
-    return NextResponse.json({ error: "Failed to generate breakdown" }, { status: 500 });
+  if (!content) {
+    return NextResponse.json({ error: "No response from AI" }, { status: 500 });
   }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
+  }
+
+  // ── 3. Write back to Supabase cache (fire and forget) ──────────────────────
+  try {
+    const writeClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    await writeClient
+      .from("howdoisay_phrase_cache")
+      .upsert({
+        phrase: phraseKey,
+        target_lang: targetLanguage,
+        native_lang: nativeLang,
+        result: parsed,
+      }, { onConflict: "phrase,target_lang,native_lang" });
+  } catch (err) {
+    console.error("Cache write error (non-fatal):", err);
+  }
+
+  return NextResponse.json(parsed);
 }

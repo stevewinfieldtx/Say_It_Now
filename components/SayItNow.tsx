@@ -1709,28 +1709,27 @@ export default function SayItNow() {
   const selectedNativeLang = NATIVE_LANGUAGES.find((l) => l.code === nativeLang)!;
   const t = UI_TEXT[nativeLang] || UI_TEXT["en"];
 
-  const speakText = (text: string, slow: boolean = true, onDone?: () => void) => {
+  const speakText = (text: string, slow: boolean = true, wordIndex?: number) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = SPEECH_LOCALE[lang] || "en-US";
     utter.rate = slow ? 0.5 : 0.85;
     utter.pitch = 1;
-    utter.onstart = () => setSpeaking(true);
-    utter.onend = () => { setSpeaking(false); setSpeakingWord(null); onDone?.(); };
+    utter.volume = 1;
+    if (wordIndex !== undefined) {
+      setSpeakingWord(wordIndex);
+    } else {
+      setSpeaking(true);
+      setSpeakingWord(null);
+    }
+    utter.onend = () => { setSpeaking(false); setSpeakingWord(null); };
     utter.onerror = () => { setSpeaking(false); setSpeakingWord(null); };
     window.speechSynthesis.speak(utter);
   };
 
-  const speakPhrase = (text: string, slow: boolean = true) => {
-    setSpeakingWord(null);
-    speakText(text, slow);
-  };
-
-  const speakWord = (word: string, index: number) => {
-    setSpeakingWord(index);
-    speakText(word, true, () => setSpeakingWord(null));
-  };
+  const speakPhrase = (text: string, slow: boolean = true) => speakText(text, slow);
+  const speakWord = (word: string, index: number) => speakText(word, true, index);
 
   const getCached = (phrase: string, langCode: string): PhraseResult | null => {
     const langCache = PHRASE_CACHE[langCode];
@@ -1930,14 +1929,31 @@ export default function SayItNow() {
               <p className="text-lg font-mono text-blue-400 tracking-wide mb-3">{result.phonetic}</p>
 
               {/* Sounds-like summary — one per word */}
-              <div className="border-t border-slate-700 pt-3 mb-4 space-y-1">
-                {result.syllables.map((s, i) => (
-                  <div key={i} className="flex items-baseline gap-2 text-sm">
-                    <span className="font-bold text-white min-w-fit">{s.word}</span>
-                    <span className="text-slate-400">→</span>
-                    <span className="text-yellow-300">{s.soundsLike}</span>
-                  </div>
-                ))}
+              <div className="border-t border-slate-700 pt-3 mb-4 space-y-1.5">
+                {result.syllables.map((s, i) => {
+                  const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
+                  return (
+                    <div key={i} className="flex items-baseline gap-2 text-sm flex-wrap">
+                      <span className="font-bold text-white min-w-fit">{s.word}</span>
+                      <span className="text-slate-400">→</span>
+                      {(() => {
+                        // Split soundsLike before the first quote so tone badge sits right before the anchor word
+                        const quoteIdx = s.soundsLike.search(/["\u2018\u201c']/);
+                        const before = quoteIdx > 0 ? s.soundsLike.slice(0, quoteIdx) : s.soundsLike;
+                        const after  = quoteIdx > 0 ? s.soundsLike.slice(quoteIdx) : "";
+                        return (
+                          <span className="text-yellow-300 flex-1">
+                            {before}
+                            <span className="inline-flex items-center mx-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: tone.color + "30", color: tone.color }}>
+                              {tone.symbol} {t.toneLabels[s.tone]?.label || tone.label}
+                            </span>
+                            {after}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Hear It buttons */}
@@ -2055,8 +2071,9 @@ export default function SayItNow() {
         )}
       </div>
 
-      <div className="text-center pb-8 pt-4 text-xs text-gray-400">
-        How Do I Say — Speak confidently anywhere in the world 🌏
+      <div className="text-center pb-8 pt-4 text-xs text-gray-400 space-y-1">
+        <p>How Do I Say — Speak confidently anywhere in the world 🌏</p>
+        <p>Have a suggestion? Email us at <a href="mailto:info@nynimpact.com" className="underline hover:text-gray-300 transition">info@nynimpact.com</a></p>
       </div>
     </div>
   );
