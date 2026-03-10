@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import UI_TEXT from "./uiText";
 import OnboardingModal from "./OnboardingModal";
+import ListenPanel from "./ListenPanel";
 
 const LANGUAGES = [
   { code: "en", name: "English", flag: "🇺🇸", nativeNames: { en: "English", vi: "Tiếng Anh", ja: "英語", ko: "영어", zh: "英语", es: "Inglés", de: "Englisch", nl: "Engels", fr: "Anglais", pt: "Inglês", it: "Inglese", ar: "الإنجليزية", hi: "अंग्रेजी", uk: "Англійська", ru: "Английский", th: "ภาษาอังกฤษ" } },
@@ -352,6 +353,24 @@ export default function SayItNow() {
                 )}
               </div>
             </div>
+
+            {/* Listen for Response */}
+            <ListenPanel
+              targetLang={lang}
+              targetLangName={selectedLang.name}
+              targetLangFlag={selectedLang.flag}
+              nativeLang={nativeLang}
+              nativeLangName={selectedNativeLang.name}
+              nativeLangFlag={selectedNativeLang.flag}
+              listenLabel={t.listenLabel || "Listen for their response"}
+              listeningLabel={t.listeningLabel || "Listening..."}
+              stopLabel={t.stopLabel || "Done"}
+              theyHearLabel={t.theyHearLabel || "They said"}
+              youUnderstandLabel={t.youUnderstandLabel || "You understand"}
+              literalLabel={t.literalLabel || "Literally"}
+              tryAgainLabel={t.tryAgainLabel || "Listen again"}
+              noSpeechSupportLabel={t.noSpeechSupportLabel || "Speech recognition not supported in this browser"}
+            />
 
             {/* Syllables */}
             <div>

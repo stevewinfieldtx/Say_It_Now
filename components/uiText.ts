@@ -1,4 +1,4 @@
-// UI_TEXT — all interface strings translated by native language
+﻿// UI_TEXT — all interface strings translated by native language
 // Add more languages here as needed
 
 export interface UIStrings {
@@ -26,6 +26,15 @@ export interface UIStrings {
   generating: string;
   errorMessage: string;
   toneLabels: Record<string, { label: string; desc: string }>;
+  // Listen for conversation
+  listenLabel?: string;
+  listeningLabel?: string;
+  stopLabel?: string;
+  theyHearLabel?: string;
+  youUnderstandLabel?: string;
+  literalLabel?: string;
+  tryAgainLabel?: string;
+  noSpeechSupportLabel?: string;
 }
 
 const UI_TEXT: Record<string, UIStrings> = {
@@ -168,6 +177,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Low",     desc: "Start and stay LOW" },
       broken:  { label: "Broken",  desc: "Tight throat, creaky sound" },
     },
+    listenLabel: "👂 Listen for their response",
+    listeningLabel: "Listening — they can speak now",
+    stopLabel: "Done",
+    theyHearLabel: "They said",
+    youUnderstandLabel: "You understand",
+    literalLabel: "Literally",
+    tryAgainLabel: "Listen again",
+    noSpeechSupportLabel: "Speech recognition not supported in this browser. Try Chrome on Android or desktop.",
   },
 
   vi: {
@@ -215,6 +232,22 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Thấp",     desc: "Bắt đầu và giữ THẤP" },
       broken:  { label: "Gãy",      desc: "Cổ họng căng, giọng ngắt" },
     },
+    listenLabel: "👂 Nghe phản hồi của họ",
+    listeningLabel: "Đang nghe — họ có thể nói bây giờ",
+    stopLabel: "Xong",
+    theyHearLabel: "Họ nói",
+    youUnderstandLabel: "Bạn hiểu",
+    literalLabel: "Nghĩa đen",
+    tryAgainLabel: "Nghe lại",
+    noSpeechSupportLabel: "Trình duyệt không hỗ trợ nhận dạng giọng nói. Hãy dùng Chrome.",
+    listenLabel: "👂 Escuchar su respuesta",
+    listeningLabel: "Escuchando — pueden hablar ahora",
+    stopLabel: "Listo",
+    theyHearLabel: "Ellos dijeron",
+    youUnderstandLabel: "Tú entiendes",
+    literalLabel: "Literalmente",
+    tryAgainLabel: "Escuchar de nuevo",
+    noSpeechSupportLabel: "Reconocimiento de voz no disponible en este navegador. Prueba Chrome.",
   },
 
   es: {
@@ -250,6 +283,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Bajo",        desc: "Empieza y mantén BAJO" },
       broken:  { label: "Cortado",     desc: "Garganta tensa, sonido cortado" },
     },
+    listenLabel: "👂 Auf Antwort hören",
+    listeningLabel: "Höre zu — sie können jetzt sprechen",
+    stopLabel: "Fertig",
+    theyHearLabel: "Sie sagten",
+    youUnderstandLabel: "Du verstehst",
+    literalLabel: "Wörtlich",
+    tryAgainLabel: "Nochmal zuhören",
+    noSpeechSupportLabel: "Spracherkennung nicht unterstützt. Bitte Chrome verwenden.",
   },
 
   de: {
@@ -285,6 +326,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Tief",       desc: "Tief beginnen und halten" },
       broken:  { label: "Gebrochen",  desc: "Kehle angespannt, Knacklaut" },
     },
+    listenLabel: "👂 Luister naar hun antwoord",
+    listeningLabel: "Luisteren — ze kunnen nu spreken",
+    stopLabel: "Klaar",
+    theyHearLabel: "Zij zeiden",
+    youUnderstandLabel: "Jij begrijpt",
+    literalLabel: "Letterlijk",
+    tryAgainLabel: "Opnieuw luisteren",
+    noSpeechSupportLabel: "Spraakherkenning niet ondersteund. Probeer Chrome.",
   },
 
   nl: {
@@ -320,6 +369,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Laag",      desc: "Begin en blijf LAAG" },
       broken:  { label: "Gebroken",  desc: "Gespannen keel, krakend geluid" },
     },
+    listenLabel: "👂 Écouter leur réponse",
+    listeningLabel: "Écoute en cours — ils peuvent parler",
+    stopLabel: "Terminé",
+    theyHearLabel: "Ils ont dit",
+    youUnderstandLabel: "Vous comprenez",
+    literalLabel: "Littéralement",
+    tryAgainLabel: "Écouter à nouveau",
+    noSpeechSupportLabel: "Reconnaissance vocale non supportée. Essayez Chrome.",
   },
 
   fr: {
@@ -355,6 +412,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Bas",        desc: "Commencer et rester BAS" },
       broken:  { label: "Brisé",      desc: "Gorge tendue, son brisé" },
     },
+    listenLabel: "👂 返事を聞く",
+    listeningLabel: "聞いています — 話してください",
+    stopLabel: "完了",
+    theyHearLabel: "相手が言った",
+    youUnderstandLabel: "あなたが理解する",
+    literalLabel: "直訳",
+    tryAgainLabel: "もう一度聞く",
+    noSpeechSupportLabel: "このブラウザは音声認識に対応していません。Chromeをお試しください。",
   },
 
   ja: {
@@ -496,6 +561,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "低",     desc: "低く保つ" },
       broken:  { label: "かすれ", desc: "喉を締めた音" },
     },
+    listenLabel: "👂 응답 듣기",
+    listeningLabel: "듣는 중 — 지금 말할 수 있어요",
+    stopLabel: "완료",
+    theyHearLabel: "상대방이 말했어요",
+    youUnderstandLabel: "당신이 이해하는 것",
+    literalLabel: "직역",
+    tryAgainLabel: "다시 듣기",
+    noSpeechSupportLabel: "이 브라우저에서는 음성 인식이 지원되지 않습니다. Chrome을 사용해 보세요.",
   },
 
   ko: {
@@ -531,6 +604,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "낮음",    desc: "낮게 시작하고 유지" },
       broken:  { label: "끊김",    desc: "목이 조여지는 소리" },
     },
+    listenLabel: "👂 听取对方回应",
+    listeningLabel: "正在聆听 — 他们可以说话了",
+    stopLabel: "完成",
+    theyHearLabel: "他们说",
+    youUnderstandLabel: "你理解",
+    literalLabel: "字面意思",
+    tryAgainLabel: "再次聆听",
+    noSpeechSupportLabel: "此浏览器不支持语音识别，请使用Chrome浏览器。",
   },
 
   zh: {
@@ -566,6 +647,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "低",     desc: "开始并保持低音" },
       broken:  { label: "入声",   desc: "喉咙收紧，短促音" },
     },
+    listenLabel: "👂 Ouvir a resposta deles",
+    listeningLabel: "Ouvindo — eles podem falar agora",
+    stopLabel: "Pronto",
+    theyHearLabel: "Eles disseram",
+    youUnderstandLabel: "Você entende",
+    literalLabel: "Literalmente",
+    tryAgainLabel: "Ouvir novamente",
+    noSpeechSupportLabel: "Reconhecimento de voz não suportado. Tente o Chrome.",
   },
 
   pt: {
@@ -601,6 +690,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Baixo",     desc: "Começar e manter BAIXO" },
       broken:  { label: "Quebrado",  desc: "Garganta fechada, som cortado" },
     },
+    listenLabel: "👂 Ascolta la loro risposta",
+    listeningLabel: "Ascoltando — possono parlare ora",
+    stopLabel: "Fatto",
+    theyHearLabel: "Hanno detto",
+    youUnderstandLabel: "Capisci",
+    literalLabel: "Letteralmente",
+    tryAgainLabel: "Ascolta ancora",
+    noSpeechSupportLabel: "Riconoscimento vocale non supportato. Prova Chrome.",
   },
 
   it: {
@@ -636,6 +733,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Basso",       desc: "Inizia e rimani BASSO" },
       broken:  { label: "Spezzato",    desc: "Gola tesa, suono spezzato" },
     },
+    listenLabel: "👂 استمع لردهم",
+    listeningLabel: "جارٍ الاستماع — يمكنهم التحدث الآن",
+    stopLabel: "تم",
+    theyHearLabel: "قالوا",
+    youUnderstandLabel: "أنت تفهم",
+    literalLabel: "حرفياً",
+    tryAgainLabel: "استمع مجدداً",
+    noSpeechSupportLabel: "التعرف على الكلام غير مدعوم. جرب متصفح Chrome.",
   },
 
   ar: {
@@ -671,6 +776,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "منخفض",   desc: "يبدأ ويبقى منخفضاً" },
       broken:  { label: "مكسور",   desc: "صوت متقطع من الحلق" },
     },
+    listenLabel: "👂 उनका जवाब सुनें",
+    listeningLabel: "सुन रहे हैं — वे अब बोल सकते हैं",
+    stopLabel: "हो गया",
+    theyHearLabel: "उन्होंने कहा",
+    youUnderstandLabel: "आप समझते हैं",
+    literalLabel: "शाब्दिक अर्थ",
+    tryAgainLabel: "फिर से सुनें",
+    noSpeechSupportLabel: "इस ब्राउज़र में वाक् पहचान समर्थित नहीं है। Chrome आज़माएं।",
   },
 
   hi: {
@@ -706,6 +819,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "नीचा",      desc: "नीचा शुरू करें और रखें" },
       broken:  { label: "टूटा",      desc: "गले से दबा हुआ स्वर" },
     },
+    listenLabel: "👂 Слухати відповідь",
+    listeningLabel: "Слухаю — вони можуть говорити",
+    stopLabel: "Готово",
+    theyHearLabel: "Вони сказали",
+    youUnderstandLabel: "Ви розумієте",
+    literalLabel: "Дослівно",
+    tryAgainLabel: "Слухати знову",
+    noSpeechSupportLabel: "Розпізнавання мовлення не підтримується. Спробуйте Chrome.",
   },
 
   uk: {
@@ -741,6 +862,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Низький",    desc: "Починати і тримати НИЗЬКО" },
       broken:  { label: "Переривчастий", desc: "Напружене горло, уривчастий звук" },
     },
+    listenLabel: "👂 Слушать ответ",
+    listeningLabel: "Слушаю — они могут говорить",
+    stopLabel: "Готово",
+    theyHearLabel: "Они сказали",
+    youUnderstandLabel: "Вы понимаете",
+    literalLabel: "Дословно",
+    tryAgainLabel: "Слушать снова",
+    noSpeechSupportLabel: "Распознавание речи не поддерживается. Попробуйте Chrome.",
   },
 
   ru: {
@@ -776,6 +905,14 @@ const UI_TEXT: Record<string, UIStrings> = {
       low:     { label: "Низкий",      desc: "Начинать и держать НИЗКО" },
       broken:  { label: "Прерывистый", desc: "Напряжённое горло, резкий звук" },
     },
+    listenLabel: "👂 ฟังคำตอบของพวกเขา",
+    listeningLabel: "กำลังฟัง — พวกเขาพูดได้เลย",
+    stopLabel: "เสร็จแล้ว",
+    theyHearLabel: "พวกเขาพูดว่า",
+    youUnderstandLabel: "คุณเข้าใจ",
+    literalLabel: "แปลตรงๆ",
+    tryAgainLabel: "ฟังอีกครั้ง",
+    noSpeechSupportLabel: "เบราว์เซอร์นี้ไม่รองรับการรู้จำเสียง ลอง Chrome ดู",
   },
 
   th: {
