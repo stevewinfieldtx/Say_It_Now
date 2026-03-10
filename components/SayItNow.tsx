@@ -3,21 +3,21 @@ import { useState, useRef } from "react";
 import UI_TEXT from "./uiText";
 
 const LANGUAGES = [
-  { code: "vi", name: "Vietnamese", flag: "🇻🇳" },
-  { code: "th", name: "Thai", flag: "🇹🇭" },
-  { code: "ja", name: "Japanese", flag: "🇯🇵" },
-  { code: "ko", name: "Korean", flag: "🇰🇷" },
-  { code: "zh", name: "Mandarin Chinese", flag: "🇨🇳" },
-  { code: "es", name: "Spanish", flag: "🇪🇸" },
-  { code: "de", name: "German", flag: "🇩🇪" },
-  { code: "nl", name: "Dutch", flag: "🇳🇱" },
-  { code: "fr", name: "French", flag: "🇫🇷" },
-  { code: "pt", name: "Portuguese", flag: "🇵🇹" },
-  { code: "it", name: "Italian", flag: "🇮🇹" },
-  { code: "ar", name: "Arabic", flag: "🇸🇦" },
-  { code: "hi", name: "Hindi", flag: "🇮🇳" },
-  { code: "uk", name: "Ukrainian", flag: "🇺🇦" },
-  { code: "ru", name: "Russian", flag: "🇷🇺" },
+  { code: "vi", name: "Vietnamese", flag: "🇻🇳", nativeNames: { en: "Vietnamese", vi: "Tiếng Việt", ja: "ベトナム語", ko: "베트남어", zh: "越南语", es: "Vietnamita", de: "Vietnamesisch", nl: "Vietnamees", fr: "Vietnamien", pt: "Vietnamita", it: "Vietnamita", ar: "الفيتنامية", hi: "वियतनामी", uk: "В'єтнамська", ru: "Вьетнамский", th: "ภาษาเวียดนาม" } },
+  { code: "th", name: "Thai", flag: "🇹🇭", nativeNames: { en: "Thai", vi: "Tiếng Thái", ja: "タイ語", ko: "태국어", zh: "泰语", es: "Tailandés", de: "Thailändisch", nl: "Thais", fr: "Thaï", pt: "Tailandês", it: "Tailandese", ar: "التايلاندية", hi: "थाई", uk: "Тайська", ru: "Тайский", th: "ภาษาไทย" } },
+  { code: "ja", name: "Japanese", flag: "🇯🇵", nativeNames: { en: "Japanese", vi: "Tiếng Nhật", ja: "日本語", ko: "일본어", zh: "日语", es: "Japonés", de: "Japanisch", nl: "Japans", fr: "Japonais", pt: "Japonês", it: "Giapponese", ar: "اليابانية", hi: "जापानी", uk: "Японська", ru: "Японский", th: "ภาษาญี่ปุ่น" } },
+  { code: "ko", name: "Korean", flag: "🇰🇷", nativeNames: { en: "Korean", vi: "Tiếng Hàn", ja: "韓国語", ko: "한국어", zh: "韩语", es: "Coreano", de: "Koreanisch", nl: "Koreaans", fr: "Coréen", pt: "Coreano", it: "Coreano", ar: "الكورية", hi: "कोरियाई", uk: "Корейська", ru: "Корейский", th: "ภาษาเกาหลี" } },
+  { code: "zh", name: "Mandarin Chinese", flag: "🇨🇳", nativeNames: { en: "Mandarin", vi: "Tiếng Trung", ja: "中国語", ko: "중국어", zh: "普通话", es: "Chino mandarín", de: "Mandarin", nl: "Mandarijn", fr: "Mandarin", pt: "Mandarim", it: "Mandarino", ar: "الصينية المندرينية", hi: "मंदारिन", uk: "Мандаринська", ru: "Мандаринский", th: "ภาษาจีนกลาง" } },
+  { code: "es", name: "Spanish", flag: "🇪🇸", nativeNames: { en: "Spanish", vi: "Tiếng Tây Ban Nha", ja: "スペイン語", ko: "스페인어", zh: "西班牙语", es: "Español", de: "Spanisch", nl: "Spaans", fr: "Espagnol", pt: "Espanhol", it: "Spagnolo", ar: "الإسبانية", hi: "स्पेनिश", uk: "Іспанська", ru: "Испанский", th: "ภาษาสเปน" } },
+  { code: "de", name: "German", flag: "🇩🇪", nativeNames: { en: "German", vi: "Tiếng Đức", ja: "ドイツ語", ko: "독일어", zh: "德语", es: "Alemán", de: "Deutsch", nl: "Duits", fr: "Allemand", pt: "Alemão", it: "Tedesco", ar: "الألمانية", hi: "जर्मन", uk: "Німецька", ru: "Немецкий", th: "ภาษาเยอรมัน" } },
+  { code: "nl", name: "Dutch", flag: "🇳🇱", nativeNames: { en: "Dutch", vi: "Tiếng Hà Lan", ja: "オランダ語", ko: "네덜란드어", zh: "荷兰语", es: "Neerlandés", de: "Niederländisch", nl: "Nederlands", fr: "Néerlandais", pt: "Holandês", it: "Olandese", ar: "الهولندية", hi: "डच", uk: "Нідерландська", ru: "Нидерландский", th: "ภาษาดัตช์" } },
+  { code: "fr", name: "French", flag: "🇫🇷", nativeNames: { en: "French", vi: "Tiếng Pháp", ja: "フランス語", ko: "프랑스어", zh: "法语", es: "Francés", de: "Französisch", nl: "Frans", fr: "Français", pt: "Francês", it: "Francese", ar: "الفرنسية", hi: "फ्रेंच", uk: "Французька", ru: "Французский", th: "ภาษาฝรั่งเศส" } },
+  { code: "pt", name: "Portuguese", flag: "🇵🇹", nativeNames: { en: "Portuguese", vi: "Tiếng Bồ Đào Nha", ja: "ポルトガル語", ko: "포르투갈어", zh: "葡萄牙语", es: "Portugués", de: "Portugiesisch", nl: "Portugees", fr: "Portugais", pt: "Português", it: "Portoghese", ar: "البرتغالية", hi: "पुर्तगाली", uk: "Португальська", ru: "Португальский", th: "ภาษาโปรตุเกส" } },
+  { code: "it", name: "Italian", flag: "🇮🇹", nativeNames: { en: "Italian", vi: "Tiếng Ý", ja: "イタリア語", ko: "이탈리아어", zh: "意大利语", es: "Italiano", de: "Italienisch", nl: "Italiaans", fr: "Italien", pt: "Italiano", it: "Italiano", ar: "الإيطالية", hi: "इतालवी", uk: "Італійська", ru: "Итальянский", th: "ภาษาอิตาลี" } },
+  { code: "ar", name: "Arabic", flag: "🇸🇦", nativeNames: { en: "Arabic", vi: "Tiếng Ả Rập", ja: "アラビア語", ko: "아랍어", zh: "阿拉伯语", es: "Árabe", de: "Arabisch", nl: "Arabisch", fr: "Arabe", pt: "Árabe", it: "Arabo", ar: "العربية", hi: "अरबी", uk: "Арабська", ru: "Арабский", th: "ภาษาอาหรับ" } },
+  { code: "hi", name: "Hindi", flag: "🇮🇳", nativeNames: { en: "Hindi", vi: "Tiếng Hindi", ja: "ヒンディー語", ko: "힌디어", zh: "印地语", es: "Hindi", de: "Hindi", nl: "Hindi", fr: "Hindi", pt: "Hindi", it: "Hindi", ar: "الهندية", hi: "हिंदी", uk: "Гінді", ru: "Хинди", th: "ภาษาฮินดี" } },
+  { code: "uk", name: "Ukrainian", flag: "🇺🇦", nativeNames: { en: "Ukrainian", vi: "Tiếng Ukraina", ja: "ウクライナ語", ko: "우크라이나어", zh: "乌克兰语", es: "Ucraniano", de: "Ukrainisch", nl: "Oekraïens", fr: "Ukrainien", pt: "Ucraniano", it: "Ucraino", ar: "الأوكرانية", hi: "यूक्रेनी", uk: "Українська", ru: "Украинский", th: "ภาษายูเครน" } },
+  { code: "ru", name: "Russian", flag: "🇷🇺", nativeNames: { en: "Russian", vi: "Tiếng Nga", ja: "ロシア語", ko: "러시아어", zh: "俄语", es: "Ruso", de: "Russisch", nl: "Russisch", fr: "Russe", pt: "Russo", it: "Russo", ar: "الروسية", hi: "रूसी", uk: "Російська", ru: "Русский", th: "ภาษารัสเซีย" } },
 ];
 
 const TONE_INFO: Record<string, { symbol: string; color: string; label: string; desc: string }> = {
@@ -1647,26 +1647,146 @@ const PHRASE_CACHE: CacheMap = {
   },
 };
 
-const QUICK_PHRASES = [
-  "hello",
-  "thank you",
-  "thank you very much",
-  "excuse me",
-  "goodbye",
-  "how much is this?",
-  "the bill please",
-  "no ice",
-  "delicious",
-  "where is the bathroom?",
-  "i don't understand",
-  "i want this",
-  "can you speak slower?",
-  "do you speak english?",
-  "my name is steve",
-  "nice to meet you",
-  "cheers!",
-  "one more please",
+const PHRASE_CATEGORIES = [
+  {
+    id: "greetings",
+    emoji: "🤝",
+    label: "Greetings & Basics",
+    phrases: [
+      "hello",
+      "goodbye",
+      "thank you",
+      "thank you very much",
+      "please",
+      "excuse me",
+      "sorry",
+      "yes",
+      "no",
+      "you're welcome",
+      "my name is...",
+      "nice to meet you",
+      "how are you?",
+      "i'm fine, thank you",
+      "do you speak english?",
+      "i don't understand",
+      "can you speak slower?",
+      "cheers!",
+      "good morning",
+      "good night",
+    ],
+  },
+  {
+    id: "food",
+    emoji: "🍽️",
+    label: "Food & Dining",
+    phrases: [
+      "the bill please",
+      "no ice",
+      "delicious",
+      "one more please",
+      "water please",
+      "no spicy",
+      "i am vegetarian",
+      "i am allergic to peanuts",
+      "no MSG please",
+      "what do you recommend?",
+      "a table for two",
+      "the menu please",
+      "do you have...",
+      "well done",
+      "medium rare",
+      "takeaway please",
+      "very delicious",
+      "no meat",
+      "no dairy",
+      "can i have the receipt?",
+    ],
+  },
+  {
+    id: "transport",
+    emoji: "🚕",
+    label: "Getting Around",
+    phrases: [
+      "where is the bathroom?",
+      "how much is this?",
+      "how far is it?",
+      "turn left",
+      "turn right",
+      "go straight",
+      "stop here",
+      "take me to the airport",
+      "how much to the airport?",
+      "i want to go to...",
+      "where is the train station?",
+      "where is the bus stop?",
+      "i am lost",
+      "can you call a taxi?",
+      "wait here please",
+      "how long does it take?",
+      "is it far?",
+      "on the left",
+      "on the right",
+      "straight ahead",
+    ],
+  },
+  {
+    id: "shopping",
+    emoji: "🏨",
+    label: "Shopping & Hotels",
+    phrases: [
+      "how much is this?",
+      "too expensive",
+      "do you have a discount?",
+      "i'll take it",
+      "do you have this in another size?",
+      "do you have this in another color?",
+      "can i try it on?",
+      "receipt please",
+      "do you accept credit card?",
+      "i have a reservation",
+      "check in please",
+      "check out please",
+      "what time is check out?",
+      "can i have a room?",
+      "is breakfast included?",
+      "the wifi password please",
+      "my room key please",
+      "can you help me?",
+      "i want a refund",
+      "is there a pharmacy nearby?",
+    ],
+  },
+  {
+    id: "emergency",
+    emoji: "🆘",
+    label: "Emergency & Health",
+    phrases: [
+      "help!",
+      "call the police",
+      "call an ambulance",
+      "i need a doctor",
+      "i am sick",
+      "i have a fever",
+      "i have a stomach ache",
+      "i am in pain",
+      "i am allergic to...",
+      "where is the hospital?",
+      "where is the pharmacy?",
+      "i need medicine",
+      "please call this number",
+      "i have lost my passport",
+      "i have been robbed",
+      "i need help",
+      "is there a doctor nearby?",
+      "this is an emergency",
+      "please hurry",
+      "i don't feel well",
+    ],
+  },
 ];
+
+// Keep for cache lookup compatibility
+const QUICK_PHRASES = PHRASE_CATEGORIES.flatMap((c) => c.phrases);
 
 // Map our language codes to BCP-47 locale codes for speech synthesis
 const SPEECH_LOCALE: Record<string, string> = {
@@ -1695,6 +1815,7 @@ export default function SayItNow() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [nativeLang, setNativeLang] = useState("en");
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showNativePicker, setShowNativePicker] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -1703,10 +1824,12 @@ export default function SayItNow() {
 
   const selectedLang = LANGUAGES.find((l) => l.code === lang)!;
   const NATIVE_LANGUAGES = [
-    { code: "en", name: "English", flag: "🇺🇸" },
+    { code: "en", name: "English", flag: "🇺🇸", nativeNames: { en: "English", vi: "Tiếng Anh", ja: "英語", ko: "영어", zh: "英语", es: "Inglés", de: "Englisch", nl: "Engels", fr: "Anglais", pt: "Inglês", it: "Inglese", ar: "الإنجليزية", hi: "अंग्रेजी", uk: "Англійська", ru: "Английский", th: "ภาษาอังกฤษ" } },
     ...LANGUAGES,
   ];
   const selectedNativeLang = NATIVE_LANGUAGES.find((l) => l.code === nativeLang)!;
+  // Helper: get language name in the user's native language
+  const getLangName = (l: typeof NATIVE_LANGUAGES[0]) => (l as any).nativeNames?.[nativeLang] || l.name;
   const t = UI_TEXT[nativeLang] || UI_TEXT["en"];
 
   const speakText = (text: string, slow: boolean = true, wordIndex?: number) => {
@@ -1813,7 +1936,7 @@ export default function SayItNow() {
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-gray-200 bg-white text-sm font-semibold hover:border-blue-400 transition"
               >
                 <span className="text-lg">{selectedNativeLang.flag}</span>
-                <span className="truncate">{selectedNativeLang.name}</span>
+                <span className="truncate">{getLangName(selectedNativeLang)}</span>
                 <span className="text-xs text-gray-400 ml-auto">▼</span>
               </button>
               {showNativePicker && (
@@ -1827,7 +1950,7 @@ export default function SayItNow() {
                         className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-left hover:bg-slate-50 transition ${l.code === nativeLang ? "bg-slate-100 font-bold" : ""}`}
                       >
                         <span className="text-lg">{l.flag}</span>
-                        {l.name}
+                        {(l as any).nativeNames?.[l.code] || l.name}
                         {l.code === nativeLang && <span className="ml-auto text-blue-600">✓</span>}
                       </button>
                     ))}
@@ -1847,7 +1970,7 @@ export default function SayItNow() {
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-blue-500 bg-white text-sm font-semibold hover:border-blue-600 transition"
               >
                 <span className="text-lg">{selectedLang.flag}</span>
-                <span className="truncate">{selectedLang.name}</span>
+                <span className="truncate">{getLangName(selectedLang)}</span>
                 <span className="text-xs text-gray-400 ml-auto">▼</span>
               </button>
               {showLangPicker && (
@@ -1861,7 +1984,7 @@ export default function SayItNow() {
                         className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-left hover:bg-slate-50 transition ${l.code === lang ? "bg-slate-100 font-bold" : ""}`}
                       >
                         <span className="text-lg">{l.flag}</span>
-                        {l.name}
+                        {getLangName(l)}
                         {l.code === lang && <span className="ml-auto text-blue-600">✓</span>}
                       </button>
                     ))}
@@ -1919,7 +2042,7 @@ export default function SayItNow() {
             {/* Hero */}
             <div className="bg-slate-900 text-white rounded-2xl p-6">
               <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">
-                {t.sayThisIn} {selectedLang.flag} {selectedLang.name}
+                {t.sayThisIn} {selectedLang.flag} {getLangName(selectedLang)}
               </p>
 
               {/* Native script */}
@@ -2041,32 +2164,74 @@ export default function SayItNow() {
           </div>
         )}
 
-        {/* Home — phrase list */}
+        {/* Home — category boxes */}
         {!result && !loading && (
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
-              {t.quickPhrases}
-            </p>
-            <div className="grid gap-2">
-              {QUICK_PHRASES.map((phrase) => (
+          <div className="space-y-3">
+
+            {PHRASE_CATEGORIES.map((cat) => (
+              <div key={cat.id} className="rounded-2xl border border-gray-200 overflow-hidden">
+                {/* Category header — tap to expand */}
                 <button
-                  key={phrase}
-                  onClick={() => handleSearch(phrase)}
-                  className="flex justify-between items-center px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-800 hover:border-blue-400 hover:bg-slate-50 transition capitalize text-left"
+                  onClick={() => setOpenCategory(openCategory === cat.id ? null : cat.id)}
+                  className="w-full flex items-center justify-between px-4 py-4 bg-white hover:bg-slate-50 transition"
                 >
-                  <span>{phrase}</span>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                    {isCached(phrase) && (
-                      <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">{t.instant}</span>
-                    )}
-                    <span className="text-gray-400">→</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{cat.emoji}</span>
+                    <div className="text-left">
+                      <p className="font-bold text-gray-900 text-sm">{cat.label}</p>
+                      <p className="text-xs text-gray-400">{cat.phrases.length} phrases</p>
+                    </div>
                   </div>
+                  <span className="text-gray-400 text-lg transition-transform duration-200" style={{ transform: openCategory === cat.id ? 'rotate(90deg)' : 'rotate(0deg)' }}>›</span>
                 </button>
-              ))}
+
+                {/* Phrase list — shown when expanded */}
+                {openCategory === cat.id && (
+                  <div className="border-t border-gray-100 bg-gray-50">
+                    {cat.phrases.map((phrase) => (
+                      <button
+                        key={phrase}
+                        onClick={() => handleSearch(phrase)}
+                        className="w-full flex justify-between items-center px-5 py-3 text-sm text-gray-800 hover:bg-blue-50 hover:text-blue-900 transition capitalize text-left border-b border-gray-100 last:border-0"
+                      >
+                        <span>{t.phraseLabels?.[phrase] || phrase}</span>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          {isCached(phrase) && (
+                            <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">instant</span>
+                          )}
+                          <span className="text-gray-300">›</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Custom phrase — Pro feature */}
+            <div className="rounded-2xl border-2 border-dashed border-gray-200 p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">✏️ Custom Phrase</p>
+              <div className="flex gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && input.trim() && handleSearch(input.trim())}
+                  placeholder={t.placeholder}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button
+                  onClick={() => input.trim() && handleSearch(input.trim())}
+                  disabled={!input.trim()}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-xl text-sm font-semibold transition"
+                >
+                  {t.sayItButton}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2 text-center">Type anything — any phrase, any situation</p>
             </div>
-            <p className="text-xs text-gray-400 mt-4 text-center">
-              {t.customPhrasesNote}
-            </p>
+
           </div>
         )}
       </div>
