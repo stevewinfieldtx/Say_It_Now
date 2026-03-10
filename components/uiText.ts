@@ -185,7 +185,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "You understand",
     literalLabel: "Literally",
     tryAgainLabel: "Listen again",
-    noSpeechSupportLabel: "Speech recognition not supported in this browser. Try Chrome on Android or desktop.",`n    phrasesLabel: "phrases",
+    noSpeechSupportLabel: "Speech recognition not supported in this browser. Try Chrome on Android or desktop.",
+    phrasesLabel: "phrases",
   },
 
   vi: {
@@ -240,7 +241,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Bạn hiểu",
     literalLabel: "Nghĩa đen",
     tryAgainLabel: "Nghe lại",
-    noSpeechSupportLabel: "Trình duyệt không hỗ trợ nhận dạng giọng nói. Hãy dùng Chrome.",`n    phrasesLabel: "cụm từ",
+    noSpeechSupportLabel: "Trình duyệt không hỗ trợ nhận dạng giọng nói. Hãy dùng Chrome.",
+    phrasesLabel: "cụm từ",
   },
 
   es: {
@@ -283,7 +285,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Du verstehst",
     literalLabel: "Wörtlich",
     tryAgainLabel: "Nochmal zuhören",
-    noSpeechSupportLabel: "Spracherkennung nicht unterstützt. Bitte Chrome verwenden.",`n    phrasesLabel: "Sätze",
+    noSpeechSupportLabel: "Spracherkennung nicht unterstützt. Bitte Chrome verwenden.",
+    phrasesLabel: "Sätze",
   },
 
   de: {
@@ -326,7 +329,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Jij begrijpt",
     literalLabel: "Letterlijk",
     tryAgainLabel: "Opnieuw luisteren",
-    noSpeechSupportLabel: "Spraakherkenning niet ondersteund. Probeer Chrome.",`n    phrasesLabel: "zinnen",
+    noSpeechSupportLabel: "Spraakherkenning niet ondersteund. Probeer Chrome.",
+    phrasesLabel: "zinnen",
   },
 
   nl: {
@@ -369,7 +373,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Vous comprenez",
     literalLabel: "Littéralement",
     tryAgainLabel: "Écouter à nouveau",
-    noSpeechSupportLabel: "Reconnaissance vocale non supportée. Essayez Chrome.",`n    phrasesLabel: "phrases",
+    noSpeechSupportLabel: "Reconnaissance vocale non supportée. Essayez Chrome.",
+    phrasesLabel: "phrases",
   },
 
   fr: {
@@ -412,7 +417,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "あなたが理解する",
     literalLabel: "直訳",
     tryAgainLabel: "もう一度聞く",
-    noSpeechSupportLabel: "このブラウザは音声認識に対応していません。Chromeをお試しください。",`n    phrasesLabel: "フレーズ",
+    noSpeechSupportLabel: "このブラウザは音声認識に対応していません。Chromeをお試しください。",
+    phrasesLabel: "フレーズ",
   },
 
   ja: {
@@ -561,7 +567,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "당신이 이해하는 것",
     literalLabel: "직역",
     tryAgainLabel: "다시 듣기",
-    noSpeechSupportLabel: "이 브라우저에서는 음성 인식이 지원되지 않습니다. Chrome을 사용해 보세요.",`n    phrasesLabel: "문구",
+    noSpeechSupportLabel: "이 브라우저에서는 음성 인식이 지원되지 않습니다. Chrome을 사용해 보세요.",
+    phrasesLabel: "문구",
   },
 
   ko: {
@@ -604,7 +611,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "你理解",
     literalLabel: "字面意思",
     tryAgainLabel: "再次聆听",
-    noSpeechSupportLabel: "此浏览器不支持语音识别，请使用Chrome浏览器。",`n    phrasesLabel: "短语",
+    noSpeechSupportLabel: "此浏览器不支持语音识别，请使用Chrome浏览器。",
+    phrasesLabel: "短语",
   },
 
   zh: {
@@ -647,7 +655,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Você entende",
     literalLabel: "Literalmente",
     tryAgainLabel: "Ouvir novamente",
-    noSpeechSupportLabel: "Reconhecimento de voz não suportado. Tente o Chrome.",`n    phrasesLabel: "frases",
+    noSpeechSupportLabel: "Reconhecimento de voz não suportado. Tente o Chrome.",
+    phrasesLabel: "frases",
   },
 
   pt: {
@@ -690,7 +699,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Capisci",
     literalLabel: "Letteralmente",
     tryAgainLabel: "Ascolta ancora",
-    noSpeechSupportLabel: "Riconoscimento vocale non supportato. Prova Chrome.",`n    phrasesLabel: "frasi",
+    noSpeechSupportLabel: "Riconoscimento vocale non supportato. Prova Chrome.",
+    phrasesLabel: "frasi",
   },
 
   it: {
@@ -733,7 +743,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "أنت تفهم",
     literalLabel: "حرفياً",
     tryAgainLabel: "استمع مجدداً",
-    noSpeechSupportLabel: "التعرف على الكلام غير مدعوم. جرب متصفح Chrome.",`n    phrasesLabel: "عبارات",
+    noSpeechSupportLabel: "التعرف على الكلام غير مدعوم. جرب متصفح Chrome.",
+    phrasesLabel: "عبارات",
   },
 
   ar: {
@@ -776,7 +787,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "आप समझते हैं",
     literalLabel: "शाब्दिक अर्थ",
     tryAgainLabel: "फिर से सुनें",
-    noSpeechSupportLabel: "इस ब्राउज़र में वाक् पहचान समर्थित नहीं है। Chrome आज़माएं।",`n    phrasesLabel: "वाक्यांश",
+    noSpeechSupportLabel: "इस ब्राउज़र में वाक् पहचान समर्थित नहीं है। Chrome आज़माएं।",
+    phrasesLabel: "वाक्यांश",
   },
 
   hi: {
@@ -819,7 +831,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Ви розумієте",
     literalLabel: "Дослівно",
     tryAgainLabel: "Слухати знову",
-    noSpeechSupportLabel: "Розпізнавання мовлення не підтримується. Спробуйте Chrome.",`n    phrasesLabel: "фрази",
+    noSpeechSupportLabel: "Розпізнавання мовлення не підтримується. Спробуйте Chrome.",
+    phrasesLabel: "фрази",
   },
 
   uk: {
@@ -862,7 +875,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "Вы понимаете",
     literalLabel: "Дословно",
     tryAgainLabel: "Слушать снова",
-    noSpeechSupportLabel: "Распознавание речи не поддерживается. Попробуйте Chrome.",`n    phrasesLabel: "фразы",
+    noSpeechSupportLabel: "Распознавание речи не поддерживается. Попробуйте Chrome.",
+    phrasesLabel: "фразы",
   },
 
   ru: {
@@ -905,7 +919,8 @@ const UI_TEXT: Record<string, UIStrings> = {
     youUnderstandLabel: "คุณเข้าใจ",
     literalLabel: "แปลตรงๆ",
     tryAgainLabel: "ฟังอีกครั้ง",
-    noSpeechSupportLabel: "เบราว์เซอร์นี้ไม่รองรับการรู้จำเสียง ลอง Chrome ดู",`n    phrasesLabel: "วลี",
+    noSpeechSupportLabel: "เบราว์เซอร์นี้ไม่รองรับการรู้จำเสียง ลอง Chrome ดู",
+    phrasesLabel: "วลี",
   },
 
   th: {
