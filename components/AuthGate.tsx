@@ -83,7 +83,7 @@ export default function AuthGate({ children }: AuthGateProps) {
           <>
             <h2 className="text-lg font-bold text-gray-900 mb-1">Get started free</h2>
             <p className="text-sm text-gray-500 mb-5">
-              Enter your email and we'll send you a magic link — no password needed.
+              Enter your email and we&apos;ll send you a magic link — no password needed.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-3">
