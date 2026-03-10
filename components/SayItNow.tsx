@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import UI_TEXT from "./uiText";
 
 const LANGUAGES = [
+  { code: "en", name: "English", flag: "🇺🇸", nativeNames: { en: "English", vi: "Tiếng Anh", ja: "英語", ko: "영어", zh: "英语", es: "Inglés", de: "Englisch", nl: "Engels", fr: "Anglais", pt: "Inglês", it: "Inglese", ar: "الإنجليزية", hi: "अंग्रेजी", uk: "Англійська", ru: "Английский", th: "ภาษาอังกฤษ" } },
   { code: "vi", name: "Vietnamese", flag: "🇻🇳", nativeNames: { en: "Vietnamese", vi: "Tiếng Việt", ja: "ベトナム語", ko: "베트남어", zh: "越南语", es: "Vietnamita", de: "Vietnamesisch", nl: "Vietnamees", fr: "Vietnamien", pt: "Vietnamita", it: "Vietnamita", ar: "الفيتنامية", hi: "वियतनामी", uk: "В'єтнамська", ru: "Вьетнамский", th: "ภาษาเวียดนาม" } },
   { code: "th", name: "Thai", flag: "🇹🇭", nativeNames: { en: "Thai", vi: "Tiếng Thái", ja: "タイ語", ko: "태국어", zh: "泰语", es: "Tailandés", de: "Thailändisch", nl: "Thais", fr: "Thaï", pt: "Tailandês", it: "Tailandese", ar: "التايلاندية", hi: "थाई", uk: "Тайська", ru: "Тайский", th: "ภาษาไทย" } },
   { code: "ja", name: "Japanese", flag: "🇯🇵", nativeNames: { en: "Japanese", vi: "Tiếng Nhật", ja: "日本語", ko: "일본어", zh: "日语", es: "Japonés", de: "Japanisch", nl: "Japans", fr: "Japonais", pt: "Japonês", it: "Giapponese", ar: "اليابانية", hi: "जापानी", uk: "Японська", ru: "Японский", th: "ภาษาญี่ปุ่น" } },
@@ -1823,10 +1824,7 @@ export default function SayItNow() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedLang = LANGUAGES.find((l) => l.code === lang)!;
-  const NATIVE_LANGUAGES = [
-    { code: "en", name: "English", flag: "🇺🇸", nativeNames: { en: "English", vi: "Tiếng Anh", ja: "英語", ko: "영어", zh: "英语", es: "Inglés", de: "Englisch", nl: "Engels", fr: "Anglais", pt: "Inglês", it: "Inglese", ar: "الإنجليزية", hi: "अंग्रेजी", uk: "Англійська", ru: "Английский", th: "ภาษาอังกฤษ" } },
-    ...LANGUAGES,
-  ];
+  const NATIVE_LANGUAGES = LANGUAGES;
   const selectedNativeLang = NATIVE_LANGUAGES.find((l) => l.code === nativeLang)!;
   // Helper: get language name in the user's native language
   const getLangName = (l: typeof NATIVE_LANGUAGES[0]) => (l as any).nativeNames?.[nativeLang] || l.name;
@@ -1836,7 +1834,7 @@ export default function SayItNow() {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = SPEECH_LOCALE[lang] || "en-US";
+    utter.lang = SPEECH_LOCALE[lang] || "en-US"; // English falls back to en-US naturally
     utter.rate = slow ? 0.5 : 0.85;
     utter.pitch = 1;
     utter.volume = 1;
@@ -2178,7 +2176,7 @@ export default function SayItNow() {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{cat.emoji}</span>
                     <div className="text-left">
-                      <p className="font-bold text-gray-900 text-sm">{cat.label}</p>
+                      <p className="font-bold text-gray-900 text-sm">{t.categoryLabels?.[cat.id] || cat.label}</p>
                       <p className="text-xs text-gray-400">{cat.phrases.length} phrases</p>
                     </div>
                   </div>
