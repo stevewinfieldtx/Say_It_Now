@@ -547,7 +547,7 @@ export default function SayItNow() {
       {/* QR Code Footer */}
       <div className="mt-8 mx-5 mb-8 bg-white border border-gray-200 rounded-2xl p-6 text-center space-y-4">
         <p className="text-sm font-bold text-gray-700">📱 Share This App</p>
-        <p className="text-xs text-gray-500">Scan to open on your phone — then tap <strong>"Add to Home Screen"</strong> for an app icon</p>
+        <p className="text-xs text-gray-500">Scan to open on your phone — then tap <strong>&quot;Add to Home Screen&quot;</strong> for an app icon</p>
 
         {/* QR code rendered via public API — no package needed */}
         <div className="flex justify-center">
@@ -565,8 +565,8 @@ export default function SayItNow() {
         {/* Install instructions */}
         <div className="bg-slate-50 rounded-xl p-3 text-left space-y-1.5">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Install as an app</p>
-          <p className="text-xs text-gray-600">📱 <strong>iPhone:</strong> Open in Safari → tap Share → "Add to Home Screen"</p>
-          <p className="text-xs text-gray-600">🤖 <strong>Android:</strong> Open in Chrome → tap ⋮ menu → "Add to Home Screen"</p>
+          <p className="text-xs text-gray-600">📱 <strong>iPhone:</strong> Open in Safari → tap Share → &quot;Add to Home Screen&quot;</p>
+          <p className="text-xs text-gray-600">🤖 <strong>Android:</strong> Open in Chrome → tap ⋮ menu → &quot;Add to Home Screen&quot;</p>
         </div>
 
         <p className="text-xs text-gray-400">Have a suggestion? <a href="mailto:info@nynimpact.com" className="underline">info@nynimpact.com</a></p>
