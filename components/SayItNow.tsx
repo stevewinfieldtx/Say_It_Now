@@ -380,9 +380,9 @@ export default function SayItNow() {
                   {speakingWord !== null
                     ? `${result.syllables[speakingWord]?.word}…`
                     : wordStepIndex === 0
-                      ? "Tap to hear word by word"
+                      ? "🔊 One word at a time"
                       : wordStepIndex >= result.syllables.length
-                        ? "▶ Again from start"
+                        ? "↩ Again from start"
                         : `▶ ${result.syllables[wordStepIndex]?.word}`
                   }
                 </button>
