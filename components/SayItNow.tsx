@@ -37,7 +37,8 @@ const TONE_INFO: Record<string, { symbol: string; color: string; label: string; 
 interface Syllable {
   word: string;
   phonetic: string;
-  soundsLike: string;   // The KEY new field — "like X in King Kong"
+  soundsLike: string;   // e.g. "like 'song' but start with a V"
+  displayWord: string;  // e.g. "vong" — actual sound in native-lang letters, drives ToneWord
   meaning: string;
   tone: string;
   tip: string;
@@ -338,22 +339,17 @@ export default function SayItNow() {
                 <p className="text-xs uppercase tracking-widest text-slate-500 mb-3">say it like this</p>
                 <div className="flex flex-wrap gap-4 items-end">
                   {result.syllables.map((s, i) => {
-                    // Extract the anchor word: first quoted word in soundsLike
-                    // e.g. "like 'now' in English" → "now"
-                    // e.g. 'sounds like "SNAP" in snapshot' → "SNAP"
-                    const anchorMatch = s.soundsLike.match(/'([^']+)'/) || s.soundsLike.match(/["\u201c\u2018\u2019]([^"\u201d\u2019\s]+)["\u201d\u2019\u2018]/);
-                    const anchor = (anchorMatch?.[1] || 
-                      // fallback: first word that's NOT "like","in","the","a","an","sounds","say"
-                      s.soundsLike.split(" ").find(w => 
-                        w.length > 1 && 
-                        !["like","in","the","a","an","sounds","say","as","of","english","word"].includes(w.toLowerCase())
-                      ) || s.word
-                    ).replace(/[^a-zA-Z]/g, "");
                     const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
+                    // displayWord = AI-constructed pronunciation in native-lang letters e.g. "vong"
+                    // fallback to phonetic, then strip non-alpha from word
+                    const display = (s.displayWord || s.phonetic || s.word)
+                      .replace(/[^a-zA-Z]/g, "")
+                      .toLowerCase()
+                      .slice(0, 6);
                     return (
                       <div key={i} className="flex flex-col items-center gap-1">
-                        <ToneWord word={anchor} tone={s.tone} />
-                        <span className="text-xs font-bold" style={{ color: tone.color }}>
+                        <ToneWord word={display || s.word} tone={s.tone} />
+                        <span className="text-xs font-bold text-slate-400">
                           {s.word}
                         </span>
                       </div>
