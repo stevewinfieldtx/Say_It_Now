@@ -544,9 +544,32 @@ export default function SayItNow() {
         )}
       </div>
 
-      <div className="text-center pb-8 pt-4 text-xs text-gray-400 space-y-1">
-        <p>How Do I Say — Speak confidently anywhere in the world 🌏</p>
-        <p>Have a suggestion? Email us at <a href="mailto:info@nynimpact.com" className="underline hover:text-gray-300 transition">info@nynimpact.com</a></p>
+      {/* QR Code Footer */}
+      <div className="mt-8 mx-5 mb-8 bg-white border border-gray-200 rounded-2xl p-6 text-center space-y-4">
+        <p className="text-sm font-bold text-gray-700">📱 Share This App</p>
+        <p className="text-xs text-gray-500">Scan to open on your phone — then tap <strong>"Add to Home Screen"</strong> for an app icon</p>
+
+        {/* QR code rendered via public API — no package needed */}
+        <div className="flex justify-center">
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://howdoisay.app&bgcolor=ffffff&color=0f172a&qzone=2&format=png`}
+            alt="QR code for howdoisay.app"
+            width={160}
+            height={160}
+            className="rounded-xl border border-gray-100"
+          />
+        </div>
+
+        <p className="text-base font-extrabold text-slate-800 tracking-tight">howdoisay.app</p>
+
+        {/* Install instructions */}
+        <div className="bg-slate-50 rounded-xl p-3 text-left space-y-1.5">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Install as an app</p>
+          <p className="text-xs text-gray-600">📱 <strong>iPhone:</strong> Open in Safari → tap Share → "Add to Home Screen"</p>
+          <p className="text-xs text-gray-600">🤖 <strong>Android:</strong> Open in Chrome → tap ⋮ menu → "Add to Home Screen"</p>
+        </div>
+
+        <p className="text-xs text-gray-400">Have a suggestion? <a href="mailto:info@nynimpact.com" className="underline">info@nynimpact.com</a></p>
       </div>
     </div>
   );
