@@ -84,7 +84,7 @@ Rules:
       "X-Title": "How Do I Say",
     },
     body: JSON.stringify({
-      model: process.env.OPENROUTER_MODEL_ID || "openai/gpt-4o-mini",
+      model: process.env.OPENROUTER_MODEL_ID,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
       temperature: 0.3,
