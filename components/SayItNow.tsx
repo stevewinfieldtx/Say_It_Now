@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import UI_TEXT from "./uiText";
 import OnboardingModal from "./OnboardingModal";
 import ListenPanel from "./ListenPanel";
+import ToneWord from "./ToneWord";
 
 const LANGUAGES = [
   { code: "en", name: "English", flag: "🇺🇸", nativeNames: { en: "English", vi: "Tiếng Anh", ja: "英語", ko: "영어", zh: "英语", es: "Inglés", de: "Englisch", nl: "Engels", fr: "Anglais", pt: "Inglês", it: "Inglese", ar: "الإنجليزية", hi: "अंग्रेजी", uk: "Англійська", ru: "Английский", th: "ภาษาอังกฤษ" } },
@@ -423,9 +424,24 @@ export default function SayItNow() {
                       </div>
 
                       {/* Sounds Like — the hero element */}
-                      <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
-                        <span className="text-lg mt-0.5">🔊</span>
-                        <span className="text-base font-semibold text-blue-900 leading-snug">{s.soundsLike}</span>
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl px-3 py-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <span className="text-lg mt-0.5">🔊</span>
+                          <span className="text-base font-semibold text-blue-900 leading-snug">{s.soundsLike}</span>
+                        </div>
+                        {/* Visual intonation — letters rise/fall/dip to show tone shape */}
+                        <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 border border-blue-100">
+                          <ToneWord
+                            word={(
+                              s.soundsLike.match(/["\u201c\u2018]([^"\u201d\u2019]+)["\u201d\u2019]/)?.[1] ||
+                              s.soundsLike.split(" ").find(w => w.length > 2 && w === w.toUpperCase()) ||
+                              s.soundsLike.split(" ").filter(w => w.length > 2).slice(-1)[0] ||
+                              s.soundsLike.split(" ")[0]
+                            ).replace(/[^a-zA-Z]/g, "")}
+                            tone={s.tone}
+                          />
+                          <span className="text-xs text-gray-400 italic">← how your voice moves</span>
+                        </div>
                       </div>
 
                       <p className="text-sm text-gray-500"><span className="font-semibold text-gray-700">{t.means}</span> {s.meaning}</p>
