@@ -331,32 +331,33 @@ export default function SayItNow() {
               {/* Phonetic spelling */}
               <p className="text-lg font-mono text-blue-400 tracking-wide mb-3">{result.phonetic}</p>
 
-              {/* Sounds-like summary — one per word */}
-              <div className="border-t border-slate-700 pt-3 mb-4 space-y-1.5">
-                {result.syllables.map((s, i) => {
-                  const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
-                  return (
-                    <div key={i} className="flex items-baseline gap-2 text-sm flex-wrap">
-                      <span className="font-bold text-white min-w-fit">{s.word}</span>
-                      <span className="text-slate-400">→</span>
-                      {(() => {
-                        // Split soundsLike before the first quote so tone badge sits right before the anchor word
-                        const quoteIdx = s.soundsLike.search(/["\u2018\u201c']/);
-                        const before = quoteIdx > 0 ? s.soundsLike.slice(0, quoteIdx) : s.soundsLike;
-                        const after  = quoteIdx > 0 ? s.soundsLike.slice(quoteIdx) : "";
-                        return (
-                          <span className="text-yellow-300 flex-1">
-                            {before}
-                            <span className="inline-flex items-center mx-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: tone.color + "30", color: tone.color }}>
-                              {tone.symbol} {t.toneLabels[s.tone]?.label || tone.label}
-                            </span>
-                            {after}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  );
-                })}
+              {/* ── TONE STRIP — all syllables in one visual line ── */}
+              <div className="border-t border-slate-700 pt-4 mb-4">
+                <p className="text-xs uppercase tracking-widest text-slate-500 mb-3">say it like this</p>
+                <div className="flex flex-wrap gap-4 items-end">
+                  {result.syllables.map((s, i) => {
+                    // Extract the anchor word: first quoted word in soundsLike
+                    // e.g. "like 'now' in English" → "now"
+                    // e.g. 'sounds like "SNAP" in snapshot' → "SNAP"
+                    const anchorMatch = s.soundsLike.match(/["\u201c\u2018]([^"\u201d\u2019\s]+)["\u201d\u2019]/);
+                    const anchor = (anchorMatch?.[1] || 
+                      // fallback: first word that's NOT "like","in","the","a","an","sounds","say"
+                      s.soundsLike.split(" ").find(w => 
+                        w.length > 1 && 
+                        !["like","in","the","a","an","sounds","say","as","of","english","word"].includes(w.toLowerCase())
+                      ) || s.word
+                    ).replace(/[^a-zA-Z]/g, "");
+                    const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
+                    return (
+                      <div key={i} className="flex flex-col items-center gap-1">
+                        <ToneWord word={anchor} tone={s.tone} />
+                        <span className="text-xs font-bold" style={{ color: tone.color }}>
+                          {s.word}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Hear It buttons */}
@@ -423,25 +424,10 @@ export default function SayItNow() {
                         </span>
                       </div>
 
-                      {/* Sounds Like — the hero element */}
-                      <div className="bg-blue-50 border border-blue-100 rounded-xl px-3 py-3 space-y-2">
-                        <div className="flex items-start gap-2">
-                          <span className="text-lg mt-0.5">🔊</span>
-                          <span className="text-base font-semibold text-blue-900 leading-snug">{s.soundsLike}</span>
-                        </div>
-                        {/* Visual intonation — letters rise/fall/dip to show tone shape */}
-                        <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 border border-blue-100">
-                          <ToneWord
-                            word={(
-                              s.soundsLike.match(/["\u201c\u2018]([^"\u201d\u2019]+)["\u201d\u2019]/)?.[1] ||
-                              s.soundsLike.split(" ").find(w => w.length > 2 && w === w.toUpperCase()) ||
-                              s.soundsLike.split(" ").filter(w => w.length > 2).slice(-1)[0] ||
-                              s.soundsLike.split(" ")[0]
-                            ).replace(/[^a-zA-Z]/g, "")}
-                            tone={s.tone}
-                          />
-                          <span className="text-xs text-gray-400 italic">← how your voice moves</span>
-                        </div>
+                      {/* Sounds Like */}
+                      <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+                        <span className="text-lg mt-0.5">🔊</span>
+                        <span className="text-base font-semibold text-blue-900 leading-snug">{s.soundsLike}</span>
                       </div>
 
                       <p className="text-sm text-gray-500"><span className="font-semibold text-gray-700">{t.means}</span> {s.meaning}</p>
