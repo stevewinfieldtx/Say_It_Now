@@ -117,6 +117,7 @@ export default function SayItNow() {
   const [showNativePicker, setShowNativePicker] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [speakingWord, setSpeakingWord] = useState<number | null>(null);
+  const [wordStepIndex, setWordStepIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedLang = LANGUAGES.find((l) => l.code === lang)!;
@@ -172,6 +173,7 @@ export default function SayItNow() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
+      setWordStepIndex(0);
     } catch {
       setError(t.errorMessage);
     } finally {
@@ -339,7 +341,7 @@ export default function SayItNow() {
                     // Extract the anchor word: first quoted word in soundsLike
                     // e.g. "like 'now' in English" → "now"
                     // e.g. 'sounds like "SNAP" in snapshot' → "SNAP"
-                    const anchorMatch = s.soundsLike.match(/["\u201c\u2018]([^"\u201d\u2019\s]+)["\u201d\u2019]/);
+                    const anchorMatch = s.soundsLike.match(/'([^']+)'/) || s.soundsLike.match(/["\u201c\u2018\u2019]([^"\u201d\u2019\s]+)["\u201d\u2019\u2018]/);
                     const anchor = (anchorMatch?.[1] || 
                       // fallback: first word that's NOT "like","in","the","a","an","sounds","say"
                       s.soundsLike.split(" ").find(w => 
@@ -361,23 +363,40 @@ export default function SayItNow() {
               </div>
 
               {/* Hear It buttons */}
-              <div className="flex gap-3 mt-2">
+              <div className="flex gap-3 mt-2 flex-wrap">
+
+                {/* Word-by-word stepper */}
                 <button
-                  onClick={() => speakPhrase(result.native, true)}
-                  disabled={speaking}
+                  onClick={() => {
+                    const words = result.syllables.map(s => s.word);
+                    const idx = wordStepIndex % words.length;
+                    speakWord(words[idx], idx);
+                    setWordStepIndex(idx + 1);
+                  }}
+                  disabled={speakingWord !== null}
                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:text-blue-400 transition text-sm font-semibold"
                 >
-                  <span className="text-base">{speaking ? "⏳" : "🔊"}</span>
-                  {speaking ? t.playing : t.hearSlowly}
+                  <span className="text-base">{speakingWord !== null ? "⏳" : "🔊"}</span>
+                  {speakingWord !== null
+                    ? `${result.syllables[speakingWord]?.word}…`
+                    : wordStepIndex === 0
+                      ? "Tap to hear word by word"
+                      : wordStepIndex >= result.syllables.length
+                        ? "▶ Again from start"
+                        : `▶ ${result.syllables[wordStepIndex]?.word}`
+                  }
                 </button>
+
+                {/* Full phrase natural speed */}
                 <button
-                  onClick={() => speakPhrase(result.native, false)}
+                  onClick={() => { speakPhrase(result.native, false); setWordStepIndex(0); }}
                   disabled={speaking}
                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 transition text-sm font-semibold"
                 >
                   <span className="text-base">▶️</span>
                   {t.naturalSpeed}
                 </button>
+
                 {speaking && (
                   <button
                     onClick={() => { window.speechSynthesis.cancel(); setSpeaking(false); }}
