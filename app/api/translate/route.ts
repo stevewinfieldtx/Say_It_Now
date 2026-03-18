@@ -53,20 +53,36 @@ For each syllable/word you must produce these fields that work together as a sys
    Must be exactly one of: rising, falling, flat, dipping, high, low, broken
    This drives the visual animation where each letter of displayWord rises/falls/dips.
 
-3. "referenceWord" — A common ${nativeLangLabel} word that CONTAINS the sound
+3. "referenceWord" — A common ${nativeLangLabel} word that CONTAINS the sound of displayWord
    CRITICAL RULES for referenceWord:
    - Must be a word that a 10-year-old would know (top ~500 most common words)
    - Good examples: boy, cat, dog, sun, go, see, run, hot, cold, rain, song, day, home, now, how, cow, eye, say, too, food, moon, car, door, ball, fish, ten, fun, red, bed, sit, big, man, low, new, old, high, tree, shoe, blue, free, slow, my, no, so, two, you, we, he, she, me, be, key, tea
    - BAD examples: angst, quiche, bourgeois, faux, niche, genre, debris, coup — these are obscure or foreign-origin
    - If the displayWord IS already a common word (like "sin", "go", "new"), then referenceWord = displayWord
    - If the displayWord is NOT a recognizable word, find a common word that contains that sound as a syllable
+   
+   *** MOST IMPORTANT RULE ***
+   The highlighted portion of referenceWord MUST sound EXACTLY like displayWord when spoken aloud.
+   TEST: Say the highlighted part out loud. Does it sound like displayWord? If not, pick a different referenceWord.
+   
+   WRONG: displayWord="vooey", referenceWord="view", highlight="iew" — "iew" does NOT sound like "vooey"
+   WRONG: displayWord="noy", referenceWord="annoy", highlight="noy" — close but "noy" alone is ambiguous
+   RIGHT: displayWord="vooey", referenceWord="gooey", highlight="ooey" — "ooey" sounds right, user adds V
+   RIGHT: displayWord="chow", referenceWord="cow", highlight="cow" — "cow" has the "ow" sound
+   RIGHT: displayWord="sin", referenceWord="sin", highlight="sin" — exact match
+
+   When the displayWord starts with a consonant that isn't in the referenceWord, that's OK —
+   the user sees the consonant in the displayWord curve above and gets the vowel sound from the reference below.
+   Example: displayWord="vooey" with referenceWord="gooey" highlighted as "ooey" — 
+   user sees V-O-O-E-Y in the curve, sees "g**ooey**" below, combines V + ooey sound.
 
 4. "highlightStart" and "highlightEnd" — Character positions marking which part of referenceWord matches the sound
    - 0-indexed, inclusive start, exclusive end
    - If referenceWord = displayWord (whole word matches), set highlightStart=0, highlightEnd=length of word
+   - The highlighted characters must SOUND like the displayWord (or its vowel core) when read aloud
    - Example: referenceWord "denver", the sound is "den" → highlightStart=0, highlightEnd=3
    - Example: referenceWord "boy", the sound is "oy" → highlightStart=1, highlightEnd=3
-   - Example: referenceWord "chair", the sound is "air" → highlightStart=2, highlightEnd=5
+   - Example: referenceWord "gooey", the sound is "ooey" → highlightStart=1, highlightEnd=5
    - Example: referenceWord "sin", the whole word matches → highlightStart=0, highlightEnd=3
 
 ━━━ HOW IT ALL WORKS TOGETHER ━━━
@@ -100,6 +116,17 @@ Syllable 2 — "chào":
 }
 → Curve shows "chow" falling. Underneath: "**chow**" (whole word bolded)
 
+━━━ EXAMPLE (English speaker learning Vietnamese "vui") ━━━
+{
+  "word": "vui",
+  "displayWord": "vooey",
+  "tone": "flat",
+  "referenceWord": "gooey",
+  "highlightStart": 1,
+  "highlightEnd": 5
+}
+→ Curve shows "vooey" flat. Underneath: "g**ooey**" — user sees the V in the curve, gets the vowel sound from "ooey"
+
 ━━━ RESPONSE FORMAT ━━━
 
 Return ONLY valid JSON in this exact format:
@@ -111,7 +138,7 @@ Return ONLY valid JSON in this exact format:
       "word": "each word in native ${languageName} script",
       "displayWord": "the sound in ${nativeLangLabel} letters, 1-6 chars, lowercase a-z only",
       "tone": "one of: rising, falling, flat, dipping, high, low, broken",
-      "referenceWord": "a common ${nativeLangLabel} word containing this sound (must be a word a 10-year-old knows)",
+      "referenceWord": "a common ${nativeLangLabel} word where the highlighted portion SOUNDS like displayWord",
       "highlightStart": 0,
       "highlightEnd": 3
     }
@@ -121,6 +148,7 @@ Return ONLY valid JSON in this exact format:
 Strict rules:
 - displayWord: ONLY plain a-z letters, no accents, no IPA, no native script, no spaces, 1-6 chars
 - referenceWord: MUST be a very common, simple ${nativeLangLabel} word (think elementary school vocabulary)
+- The highlighted part of referenceWord must SOUND like displayWord when spoken aloud — this is the #1 rule
 - tone: MUST be exactly one of the 7 values listed
 - For tonal languages (Vietnamese, Thai, Mandarin): be very precise about tone direction
 - highlightStart/highlightEnd: 0-indexed, marks the exact characters in referenceWord that match the sound
