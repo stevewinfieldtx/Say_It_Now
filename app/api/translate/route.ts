@@ -39,75 +39,92 @@ export async function POST(req: NextRequest) {
 
 Break down this phrase: "${phrase}"
 
-For each syllable/word you must produce THREE tightly related fields: "soundsLike", "displayWord", and "tone".
-These three fields work together as a system — they are the heart of the whole app.
+For each syllable/word you must produce these fields that work together as a system:
 
-━━━ HOW THE THREE FIELDS WORK TOGETHER ━━━
+━━━ FIELD DEFINITIONS ━━━
 
-1. "soundsLike" — The human explanation (text the user reads)
-   Use a familiar ${nativeLangLabel} word as the anchor, then describe the modification.
-   Format: "like '[anchor]' but [modification]" or "rhymes with '[anchor]'"
-   Examples:
-   - "like 'song' but start with a V"
-   - "rhymes with 'now'"
-   - "like 'king' but cut off the 'ki', just say 'ng'"
-   - "like 'see' but shorter and clipped"
-   NEVER just say the anchor word alone — always include the modification if there is one.
+1. "displayWord" — The SOUND to show in the tone curve graphic
+   This is the EXACT syllable the user needs to say, spelled with ${nativeLangLabel} alphabet letters.
+   - Must be 1-6 lowercase a-z characters ONLY (no accents, no IPA, no native script, no spaces)
+   - This is what gets animated with the tone curve — each letter rises/falls/dips
+   - Example: Vietnamese "chào" → displayWord: "chow"
 
-2. "displayWord" — The visual pronunciation (letters the user will SEE animated with tone shape)
-   This is NOT the native script. This is NOT the anchor word.
-   This is the ACTUAL SOUND spelled out using ${nativeLangLabel} alphabet letters.
-   Build it by taking the anchor word and applying the modification to it.
-   Examples:
-   - soundsLike "like 'song' but start with a V" → displayWord: "vong"
-   - soundsLike "rhymes with 'now'" → displayWord: "now"
-   - soundsLike "like 'king' but just the 'ng' sound" → displayWord: "ng"
-   - soundsLike "like 'see' but shorter" → displayWord: "see"
-   - soundsLike "like 'fun' but with an 'oo' sound" → displayWord: "foon"
-   Rules for displayWord:
-   - Use ONLY ${nativeLangLabel} alphabet letters (a-z, no accents, no IPA, no native script)
-   - Must be 1-6 characters — short enough to display letter by letter
-   - Must represent the ACTUAL sound to produce, not the anchor
-   - If the anchor IS the right sound with no modification, displayWord = anchor word
-
-3. "tone" — The pitch shape of this syllable
+2. "tone" — The pitch shape of this syllable
    Must be exactly one of: rising, falling, flat, dipping, high, low, broken
    This drives the visual animation where each letter of displayWord rises/falls/dips.
 
-━━━ EXAMPLE (English speaker learning Vietnamese "vọng") ━━━
+3. "referenceWord" — A common ${nativeLangLabel} word that CONTAINS the sound
+   CRITICAL RULES for referenceWord:
+   - Must be a word that a 10-year-old would know (top ~500 most common words)
+   - Good examples: boy, cat, dog, sun, go, see, run, hot, cold, rain, song, day, home, now, how, cow, eye, say, too, food, moon, car, door, ball, fish, ten, fun, red, bed, sit, big, man, low, new, old, high, tree, shoe, blue, free, slow, my, no, so, two, you, we, he, she, me, be, key, tea
+   - BAD examples: angst, quiche, bourgeois, faux, niche, genre, debris, coup — these are obscure or foreign-origin
+   - If the displayWord IS already a common word (like "sin", "go", "new"), then referenceWord = displayWord
+   - If the displayWord is NOT a recognizable word, find a common word that contains that sound as a syllable
+
+4. "highlightStart" and "highlightEnd" — Character positions marking which part of referenceWord matches the sound
+   - 0-indexed, inclusive start, exclusive end
+   - If referenceWord = displayWord (whole word matches), set highlightStart=0, highlightEnd=length of word
+   - Example: referenceWord "denver", the sound is "den" → highlightStart=0, highlightEnd=3
+   - Example: referenceWord "boy", the sound is "oy" → highlightStart=1, highlightEnd=3
+   - Example: referenceWord "chair", the sound is "air" → highlightStart=2, highlightEnd=5
+   - Example: referenceWord "sin", the whole word matches → highlightStart=0, highlightEnd=3
+
+━━━ HOW IT ALL WORKS TOGETHER ━━━
+
+The user sees:
+1. A tone curve graphic animating the letters of displayWord (rising, falling, etc.)
+2. Underneath the curve: the referenceWord with characters [highlightStart:highlightEnd] bolded
+3. This tells them: "Make the sound of the bold part of this word, with this pitch shape"
+
+━━━ EXAMPLE (English speaker learning Vietnamese "xin chào") ━━━
+
+Syllable 1 — "xin":
 {
-  "word": "vọng",
-  "soundsLike": "like 'song' but start with a V",
-  "displayWord": "vong",
-  "tone": "dipping"
+  "word": "xin",
+  "displayWord": "sin",
+  "tone": "flat",
+  "referenceWord": "sin",
+  "highlightStart": 0,
+  "highlightEnd": 3
 }
-Result: the letters V-O-N-G animate in a dipping curve so the user sees 'vong' and knows the pitch shape.
+→ Curve shows "sin" flat. Underneath: "**sin**" (whole word bolded, because it IS the sound)
+
+Syllable 2 — "chào":
+{
+  "word": "chào",
+  "displayWord": "chow",
+  "tone": "falling",
+  "referenceWord": "chow",
+  "highlightStart": 0,
+  "highlightEnd": 4
+}
+→ Curve shows "chow" falling. Underneath: "**chow**" (whole word bolded)
+
+━━━ RESPONSE FORMAT ━━━
 
 Return ONLY valid JSON in this exact format:
 {
   "native": "the phrase in ${languageName} script",
-  "phonetic": "full phrase phonetic — spell it out using ${nativeLangLabel} letters only, no IPA",
+  "phonetic": "full phrase phonetic using ${nativeLangLabel} letters only, no IPA",
   "syllables": [
     {
       "word": "each word in native ${languageName} script",
-      "phonetic": "phonetic spelling using ${nativeLangLabel} letters only",
-      "soundsLike": "like '[${nativeLangLabel} anchor word]' but [modification, if any]",
-      "displayWord": "the actual sound in ${nativeLangLabel} letters — 1 to 6 chars, no accents",
-      "meaning": "what this word means, written in ${nativeLangLabel}",
-      "tone": "one of exactly: rising, falling, flat, dipping, high, low, broken",
-      "tip": "1-2 sentence tip in ${nativeLangLabel} helping nail the difference from the anchor word"
+      "displayWord": "the sound in ${nativeLangLabel} letters, 1-6 chars, lowercase a-z only",
+      "tone": "one of: rising, falling, flat, dipping, high, low, broken",
+      "referenceWord": "a common ${nativeLangLabel} word containing this sound (must be a word a 10-year-old knows)",
+      "highlightStart": 0,
+      "highlightEnd": 3
     }
-  ],
-  "fullTip": "2-3 sentence practical delivery tip in ${nativeLangLabel}. Include regional/dialect notes if relevant.",
-  "formal": "Formal version explanation in ${nativeLangLabel}, or null if no meaningful difference."
+  ]
 }
 
 Strict rules:
-- ALL explanation text (soundsLike, meaning, tip, fullTip, formal) must be written in ${nativeLangLabel}
-- displayWord must use ONLY plain ${nativeLangLabel} a-z letters — no accents, no IPA, no native script, no spaces
-- displayWord must be the ACTUAL sound to produce — not just the anchor word unless the anchor is already correct
-- tone must be exactly one of the 7 values listed
-- For tonal languages (Vietnamese, Thai, Mandarin, Cantonese): be very precise about tone direction`;
+- displayWord: ONLY plain a-z letters, no accents, no IPA, no native script, no spaces, 1-6 chars
+- referenceWord: MUST be a very common, simple ${nativeLangLabel} word (think elementary school vocabulary)
+- tone: MUST be exactly one of the 7 values listed
+- For tonal languages (Vietnamese, Thai, Mandarin): be very precise about tone direction
+- highlightStart/highlightEnd: 0-indexed, marks the exact characters in referenceWord that match the sound
+- Keep it minimal — no tips, no meanings, no explanations. Just the pronunciation data.`;
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",

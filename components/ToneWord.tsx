@@ -8,26 +8,26 @@ function getTonePositions(tone: string, count: number): number[] {
   return Array.from({ length: count }, (_, i) => {
     const t = count === 1 ? 0.5 : i / (count - 1);
     switch (tone) {
-      case "rising":  return t;                          // S(low)→N→A→P(high)
-      case "falling": return 1 - t;                     // S(high)→N→A→P(low)
-      case "flat":    return 0.5;                        // all middle
-      case "high":    return 0.85;                       // all near top
-      case "low":     return 0.15;                       // all near bottom
-      case "dipping": return 1 - Math.sin(t * Math.PI); // high→dips→high (U shape)
-      case "broken":  return 0.5 + (i % 2 === 0 ? 0.3 : -0.3); // jagged
+      case "rising":  return t;
+      case "falling": return 1 - t;
+      case "flat":    return 0.5;
+      case "high":    return 0.85;
+      case "low":     return 0.15;
+      case "dipping": return 1 - Math.sin(t * Math.PI);
+      case "broken":  return 0.5 + (i % 2 === 0 ? 0.3 : -0.3);
       default:        return 0.5;
     }
   });
 }
 
 const TONE_COLOR: Record<string, string> = {
-  rising:  "#2563eb", // blue
-  falling: "#dc2626", // red
-  flat:    "#6b7280", // gray
-  dipping: "#7c3aed", // purple
-  high:    "#059669", // green
-  low:     "#d97706", // amber
-  broken:  "#be185d", // pink
+  rising:  "#2563eb",
+  falling: "#dc2626",
+  flat:    "#6b7280",
+  dipping: "#7c3aed",
+  high:    "#059669",
+  low:     "#d97706",
+  broken:  "#be185d",
 };
 
 const TONE_SYMBOL: Record<string, string> = {
@@ -45,12 +45,11 @@ export default function ToneWord({ word, tone }: ToneWordProps) {
   const positions = getTonePositions(tone, letters.length);
   const color = TONE_COLOR[tone] || "#6b7280";
   const symbol = TONE_SYMBOL[tone] || "";
-  const MAX_OFFSET = 22; // px range bottom to top
+  const MAX_OFFSET = 22;
   const CONTAINER_HEIGHT = MAX_OFFSET + 32;
 
   return (
     <span className="inline-flex flex-col items-start gap-1">
-      {/* The animated word */}
       <span
         className="inline-flex items-end"
         style={{ height: `${CONTAINER_HEIGHT}px` }}
@@ -73,7 +72,6 @@ export default function ToneWord({ word, tone }: ToneWordProps) {
             {letter}
           </span>
         ))}
-        {/* Tone symbol after the word */}
         <span
           style={{
             display: "inline-block",
@@ -88,6 +86,39 @@ export default function ToneWord({ word, tone }: ToneWordProps) {
           {symbol}
         </span>
       </span>
+    </span>
+  );
+}
+
+/**
+ * ReferenceWord — shows the English reference word with the relevant syllable highlighted.
+ * e.g. referenceWord="denver" highlightStart=0 highlightEnd=3 → "Den" bolded, "ver" dimmed
+ * If the whole word IS the sound, the entire word is bolded.
+ */
+interface ReferenceWordProps {
+  referenceWord: string;
+  highlightStart: number;
+  highlightEnd: number;
+  tone: string;
+}
+
+export function ReferenceWord({ referenceWord, highlightStart, highlightEnd, tone }: ReferenceWordProps) {
+  const color = TONE_COLOR[tone] || "#6b7280";
+  const before = referenceWord.slice(0, highlightStart);
+  const highlighted = referenceWord.slice(highlightStart, highlightEnd);
+  const after = referenceWord.slice(highlightEnd);
+
+  return (
+    <span className="text-sm leading-tight">
+      {before && (
+        <span style={{ color: "#94a3b8", fontWeight: 400 }}>{before}</span>
+      )}
+      <span style={{ color, fontWeight: 800, textDecoration: "underline", textUnderlineOffset: "2px" }}>
+        {highlighted}
+      </span>
+      {after && (
+        <span style={{ color: "#94a3b8", fontWeight: 400 }}>{after}</span>
+      )}
     </span>
   );
 }

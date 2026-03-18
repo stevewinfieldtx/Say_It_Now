@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import UI_TEXT from "./uiText";
 import OnboardingModal from "./OnboardingModal";
 import ListenPanel from "./ListenPanel";
-import ToneWord, { ReferenceWord } from "./ToneWord";
+import ToneWord from "./ToneWord";
 
 const LANGUAGES = [
   { code: "en", name: "English", flag: "🇺🇸", nativeNames: { en: "English", vi: "Tiếng Anh", ja: "英語", ko: "영어", zh: "英语", es: "Inglés", de: "Englisch", nl: "Engels", fr: "Anglais", pt: "Inglês", it: "Inglese", ar: "الإنجليزية", hi: "अंग्रेजी", uk: "Англійська", ru: "Английский", th: "ภาษาอังกฤษ" } },
@@ -36,25 +36,20 @@ const TONE_INFO: Record<string, { symbol: string; color: string; label: string; 
 
 interface Syllable {
   word: string;
-  displayWord: string;
+  phonetic: string;
+  soundsLike: string;   // e.g. "like 'song' but start with a V"
+  displayWord: string;  // e.g. "vong" — actual sound in native-lang letters, drives ToneWord
+  meaning: string;
   tone: string;
-  referenceWord: string;
-  highlightStart: number;
-  highlightEnd: number;
-  // Legacy fields (may still come from cache, ignored in new UI)
-  phonetic?: string;
-  soundsLike?: string;
-  meaning?: string;
-  tip?: string;
+  tip: string;
 }
 
 interface PhraseResult {
   native: string;
   phonetic: string;
   syllables: Syllable[];
-  // Legacy fields (may still come from cache, ignored in new UI)
-  fullTip?: string;
-  formal?: string | null;
+  fullTip: string;
+  formal: string | null;
 }
 
 
@@ -301,7 +296,7 @@ export default function SayItNow() {
             <button
               type="submit"
               disabled={!input.trim() || loading}
-              className="px-6 py-4 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold text-sm tracking-wide rounded-r-2xl disabled:bg-gray-200 disabled:text-gray-400 transition-all shadow-lg shadow-blue-600/20 disabled:shadow-none"
+              className="px-6 bg-slate-900 text-white font-bold text-sm tracking-wide disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
             >
               {loading ? "..." : t.sayItButton}
             </button>
@@ -327,38 +322,36 @@ export default function SayItNow() {
               {t.backToList}
             </button>
 
-            {/* Hero — streamlined */}
+            {/* Hero */}
             <div className="bg-slate-900 text-white rounded-2xl p-6">
-
-              {/* "Say this in Vietnamese" + the native word ONLY */}
               <p className="text-xs uppercase tracking-widest text-slate-400 mb-2">
                 {t.sayThisIn} {selectedLang.flag} {getLangName(selectedLang)}
               </p>
-              <p className="text-3xl font-bold mb-5 leading-tight">{result.native}</p>
 
-              {/* ── SAY IT LIKE THIS — Tone curves with English references ── */}
+              {/* Native script */}
+              <p className="text-3xl font-bold mb-1 leading-tight">{result.native}</p>
+
+              {/* Phonetic spelling */}
+              <p className="text-lg font-mono text-blue-400 tracking-wide mb-3">{result.phonetic}</p>
+
+              {/* ── TONE STRIP — all syllables in one visual line ── */}
               <div className="border-t border-slate-700 pt-4 mb-4">
-                <p className="text-xs uppercase tracking-widest text-slate-500 mb-4">say it like this</p>
-                <div className="flex flex-wrap gap-6 items-end">
+                <p className="text-xs uppercase tracking-widest text-slate-500 mb-3">say it like this</p>
+                <div className="flex flex-wrap gap-4 items-end">
                   {result.syllables.map((s, i) => {
-                    const display = (s.displayWord || s.word)
+                    const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
+                    // displayWord = AI-constructed pronunciation in native-lang letters e.g. "vong"
+                    // fallback to phonetic, then strip non-alpha from word
+                    const display = (s.displayWord || s.phonetic || s.word)
                       .replace(/[^a-zA-Z]/g, "")
                       .toLowerCase()
                       .slice(0, 6);
-
-                    const refWord = s.referenceWord || display;
-                    const hlStart = s.highlightStart ?? 0;
-                    const hlEnd = s.highlightEnd ?? refWord.length;
-
                     return (
                       <div key={i} className="flex flex-col items-center gap-1">
                         <ToneWord word={display || s.word} tone={s.tone} />
-                        <ReferenceWord
-                          referenceWord={refWord}
-                          highlightStart={hlStart}
-                          highlightEnd={hlEnd}
-                          tone={s.tone}
-                        />
+                        <span className="text-xs font-bold text-slate-400">
+                          {s.word}
+                        </span>
                       </div>
                     );
                   })}
@@ -367,6 +360,8 @@ export default function SayItNow() {
 
               {/* Hear It buttons */}
               <div className="flex gap-3 mt-2 flex-wrap">
+
+                {/* Word-by-word stepper */}
                 <button
                   onClick={() => {
                     const words = result.syllables.map(s => s.word);
@@ -375,23 +370,24 @@ export default function SayItNow() {
                     setWordStepIndex(idx + 1);
                   }}
                   disabled={speakingWord !== null}
-                  className="flex items-center gap-2 px-5 py-3 rounded-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:text-blue-400 transition text-sm font-bold shadow-lg shadow-blue-900/30"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:text-blue-400 transition text-sm font-semibold"
                 >
                   <span className="text-base">{speakingWord !== null ? "⏳" : "🔊"}</span>
                   {speakingWord !== null
                     ? `${result.syllables[speakingWord]?.word}…`
                     : wordStepIndex === 0
-                      ? "Word by word"
+                      ? "🔊 One word at a time"
                       : wordStepIndex >= result.syllables.length
-                        ? "↩ Again"
+                        ? "↩ Again from start"
                         : `▶ ${result.syllables[wordStepIndex]?.word}`
                   }
                 </button>
 
+                {/* Full phrase natural speed */}
                 <button
                   onClick={() => { speakPhrase(result.native, false); setWordStepIndex(0); }}
                   disabled={speaking}
-                  className="flex items-center gap-2 px-5 py-3 rounded-full bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 transition text-sm font-bold"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 transition text-sm font-semibold"
                 >
                   <span className="text-base">▶️</span>
                   {t.naturalSpeed}
@@ -400,7 +396,7 @@ export default function SayItNow() {
                 {speaking && (
                   <button
                     onClick={() => { window.speechSynthesis.cancel(); setSpeaking(false); }}
-                    className="flex items-center gap-2 px-4 py-3 rounded-full bg-red-700 hover:bg-red-600 transition text-sm font-bold"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-700 hover:bg-red-600 transition text-sm font-semibold"
                   >
                     ⏹ {t.stop}
                   </button>
@@ -425,6 +421,56 @@ export default function SayItNow() {
               tryAgainLabel={t.tryAgainLabel || "Listen again"}
               noSpeechSupportLabel={t.noSpeechSupportLabel || "Speech recognition not supported in this browser"}
             />
+
+            {/* Syllables */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">{t.wordByWord}</p>
+              <div className="space-y-3">
+                {result.syllables.map((s, i) => {
+                  const tone = TONE_INFO[s.tone] || TONE_INFO.flat;
+                  return (
+                    <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+
+                      {/* Word + tone badge */}
+                      <div className="flex justify-between items-start gap-2 flex-wrap">
+                        <span className="text-2xl font-bold text-gray-900">{s.word}</span>
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap" style={{ background: tone.color + "18", color: tone.color }}>
+                          {tone.symbol} {t.toneLabels[s.tone]?.label || tone.label} — {t.toneLabels[s.tone]?.desc || tone.desc}
+                        </span>
+                      </div>
+
+                      {/* Sounds Like */}
+                      <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+                        <span className="text-lg mt-0.5">🔊</span>
+                        <span className="text-base font-semibold text-blue-900 leading-snug">{s.soundsLike}</span>
+                      </div>
+
+                      <p className="text-sm text-gray-500"><span className="font-semibold text-gray-700">{t.means}</span> {s.meaning}</p>
+                      <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 leading-relaxed">💡 {s.tip}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pro tip */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
+              <span className="text-xl flex-shrink-0">🎯</span>
+              <div>
+                <p className="text-sm font-bold text-amber-900 mb-1">{t.proTip}</p>
+                <p className="text-sm text-amber-800 leading-relaxed">{result.fullTip}</p>
+              </div>
+            </div>
+
+            {result.formal && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex gap-3">
+                <span className="text-xl flex-shrink-0">🎩</span>
+                <div>
+                  <p className="text-sm font-bold text-green-900 mb-1">{t.formalVersion}</p>
+                  <p className="text-sm text-green-800 leading-relaxed">{result.formal}</p>
+                </div>
+              </div>
+            )}
 
             <button onClick={goHome} className="w-full py-3 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
               {t.backToList}
