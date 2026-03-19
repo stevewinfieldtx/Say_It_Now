@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 import { useState, useRef } from "react";
 import UI_TEXT from "./uiText";
 import OnboardingModal from "./OnboardingModal";
 import ListenPanel from "./ListenPanel";
 import ToneWord, { ReferenceWord } from "./ToneWord";
+import { hybridLookup } from "../lib/hybridLookup";
 
 const LANGUAGES = [
   { code: "en", name: "English", flag: "🇺🇸", nativeNames: { en: "English", vi: "Tiếng Anh", ja: "英語", ko: "영어", zh: "英语", es: "Inglés", de: "Englisch", nl: "Engels", fr: "Anglais", pt: "Inglês", it: "Inglese", ar: "الإنجليزية", hi: "अंग्रेजी", uk: "Англійська", ru: "Английский", th: "ภาษาอังกฤษ" } },
@@ -124,7 +125,27 @@ export default function SayItNow() {
   const [speaking, setSpeaking] = useState(false);
   const [speakingWord, setSpeakingWord] = useState<number | null>(null);
   const [wordStepIndex, setWordStepIndex] = useState(0);
+  const [reportedWords, setReportedWords] = useState<Set<number>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const reportError = async (syllable: Syllable, index: number) => {
+    setReportedWords(prev => new Set(prev).add(index));
+    try {
+      await fetch('/api/report-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phrase: currentPhrase,
+          word: syllable.word,
+          targetLang: lang,
+          nativeLang: nativeLang,
+          displayWord: syllable.displayWord,
+          soundsLike: syllable.soundsLike,
+          tone: syllable.tone,
+        }),
+      });
+    } catch { /* silent fail */ }
+  };
 
   const selectedLang = LANGUAGES.find((l) => l.code === lang)!;
   const NATIVE_LANGUAGES = LANGUAGES;
@@ -156,32 +177,40 @@ export default function SayItNow() {
   const speakWord = (word: string, index: number) => speakText(word, true, index);
 
   const handleSearch = async (phrase: string) => {
-    const normalized = phrase.toLowerCase().trim();
     setInput(phrase);
     setCurrentPhrase(phrase);
     setError("");
+    setWordStepIndex(0);
+    setReportedWords(new Set());
 
-    setLoading(true);
-    setResult(null);
+    // Hybrid lookup: instant local result + async accurate result
+    const { instant, accurate } = hybridLookup({
+      phrase,
+      targetLanguage: lang,
+      languageName: selectedLang.name,
+      nativeLanguage: nativeLang,
+      nativeLanguageName: selectedNativeLang.name,
+    });
 
+    // Layer 1: Show local result immediately (no spinner for supported languages)
+    if (instant) {
+      setResult(instant);
+      setLoading(false);
+    } else {
+      setResult(null);
+      setLoading(true);
+    }
+
+    // Layer 2+3: Upgrade with cache/API result when ready
     try {
-      const res = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phrase,
-          targetLanguage: lang,
-          languageName: selectedLang.name,
-          nativeLanguage: nativeLang,
-          nativeLanguageName: selectedNativeLang.name,
-        }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setResult(data);
+      const accurateResult = await accurate;
+      setResult(accurateResult);
       setWordStepIndex(0);
     } catch {
-      setError(t.errorMessage);
+      // If API fails but we have local result, keep showing it
+      if (!instant) {
+        setError(t.errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -336,10 +365,10 @@ export default function SayItNow() {
               </p>
               <p className="text-3xl font-bold mb-5 leading-tight">{result.native}</p>
 
-              {/* ── SAY IT LIKE THIS — Tone curves with English references ── */}
+              {/* ── SAY IT LIKE THIS — 2-column word blocks ── */}
               <div className="border-t border-slate-700 pt-4 mb-4">
                 <p className="text-xs uppercase tracking-widest text-slate-500 mb-4">say it like this</p>
-                <div className="flex flex-wrap gap-6 items-end">
+                <div className="grid grid-cols-2 gap-3">
                   {result.syllables.map((s, i) => {
                     const display = (s.displayWord || s.word)
                       .replace(/[^a-zA-Z]/g, "")
@@ -351,14 +380,42 @@ export default function SayItNow() {
                     const hlEnd = s.highlightEnd ?? refWord.length;
 
                     return (
-                      <div key={i} className="flex flex-col items-center gap-1">
+                      <div key={i} className="bg-slate-800 rounded-xl p-3 flex flex-col items-center gap-1 relative">
+                        {/* Top-right icons: speaker + report */}
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <button
+                            onClick={() => speakWord(s.word, i)}
+                            disabled={speakingWord === i}
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-700 hover:bg-blue-600 disabled:bg-blue-800 transition text-xs"
+                            aria-label={`Play ${s.word}`}
+                          >
+                            {speakingWord === i ? "..." : "\uD83D\uDD0A"}
+                          </button>
+                          <button
+                            onClick={() => reportError(s, i)}
+                            disabled={reportedWords.has(i)}
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-700 hover:bg-red-600 disabled:bg-red-900 disabled:text-red-300 transition text-xs"
+                            aria-label="Report error"
+                            title="Report pronunciation error"
+                          >
+                            {reportedWords.has(i) ? "\u2713" : "\u26A0"}
+                          </button>
+                        </div>
+                        {/* Tone curve */}
                         <ToneWord word={display || s.word} tone={s.tone} />
+                        {/* Reference word with highlight */}
                         <ReferenceWord
                           referenceWord={refWord}
                           highlightStart={hlStart}
                           highlightEnd={hlEnd}
                           tone={s.tone}
                         />
+                        {/* SoundsLike hint */}
+                        {s.soundsLike && (
+                          <p className="text-xs text-slate-400 text-center leading-snug mt-1 italic">
+                            {s.soundsLike}
+                          </p>
+                        )}
                       </div>
                     );
                   })}

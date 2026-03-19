@@ -39,120 +39,62 @@ export async function POST(req: NextRequest) {
 
 Break down this phrase: "${phrase}"
 
-For each syllable/word you must produce these fields that work together as a system:
+━━━ YOUR PROCESS (for each syllable) ━━━
 
-━━━ FIELD DEFINITIONS ━━━
+Step 1: LISTEN — How does a native speaker actually pronounce this? Ignore spelling. Focus on SOUND.
 
-1. "displayWord" — The SOUND to show in the tone curve graphic
-   This is the EXACT syllable the user needs to say, spelled with ${nativeLangLabel} alphabet letters.
-   - Must be 1-6 lowercase a-z characters ONLY (no accents, no IPA, no native script, no spaces)
-   - This is what gets animated with the tone curve — each letter rises/falls/dips
-   - Example: Vietnamese "chào" → displayWord: "chow"
+Step 2: FIND THE CLOSEST ${nativeLangLabel.toUpperCase()} WORD — Then describe the modification.
+   Be SPECIFIC about what changes — always say what REPLACES what:
+   GOOD: "like 'home' but N instead of M"
+   GOOD: "like 'deep' but T instead of D"
+   GOOD: "'toy'" (exact match)
+   GOOD: "like 'guy' but Y at the start"
+   GOOD: "like 'la' in 'latte'"
+   BAD: "like 'home' without the M" (vague — what replaces it?)
+   BAD: "la but voice drops down" (NEVER describe the tone — the curve shows that)
+   BAD: "'kwa' but rising tone" (NEVER mention tone in soundsLike)
 
-2. "tone" — The pitch shape of this syllable
-   Must be exactly one of: rising, falling, flat, dipping, high, low, broken
-   This drives the visual animation where each letter of displayWord rises/falls/dips.
+Step 3: SPELL THE SOUND — ${nativeLangLabel} letters only (a-z, 1-6 chars) = displayWord.
+   Spell the SOUND, not the ${languageName} spelling.
+   ${languageName === "Vietnamese" ? `Vietnamese letter-to-sound rules:
+   "th" → "t" (hard T, NOT English "th")   |   "ph" → "f"   |   "đ" → "d"
+   "x" → "s"   |   "d" → "y" (like Y in "yes")   |   "gi" → "y"
+   "c/k" → "k"   |   "nh" → "ny"   |   "ng/ngh" → "ng"   |   "tr" → "ch"
+   Vowels: ô → "oh", ơ → "uh", ê → "ay", ă → short "a", â → "uh", ư → "ew"
+   u → "oo" as in "go" (shorter/rounder, NOT like "goo")` : ""}
 
-3. "referenceWord" — A common ${nativeLangLabel} word that CONTAINS the sound of displayWord
-   CRITICAL RULES for referenceWord:
-   - Must be a word that a 10-year-old would know (top ~500 most common words)
-   - Good examples: boy, cat, dog, sun, go, see, run, hot, cold, rain, song, day, home, now, how, cow, eye, say, too, food, moon, car, door, ball, fish, ten, fun, red, bed, sit, big, man, low, new, old, high, tree, shoe, blue, free, slow, my, no, so, two, you, we, he, she, me, be, key, tea
-   - BAD examples: angst, quiche, bourgeois, faux, niche, genre, debris, coup — these are obscure or foreign-origin
-   - If the displayWord IS already a common word (like "sin", "go", "new"), then referenceWord = displayWord
-   - If the displayWord is NOT a recognizable word, find a common word that contains that sound as a syllable
-   
-   *** MOST IMPORTANT RULE ***
-   The highlighted portion of referenceWord MUST sound EXACTLY like displayWord when spoken aloud.
-   TEST: Say the highlighted part out loud. Does it sound like displayWord? If not, pick a different referenceWord.
-   
-   WRONG: displayWord="vooey", referenceWord="view", highlight="iew" — "iew" does NOT sound like "vooey"
-   WRONG: displayWord="noy", referenceWord="annoy", highlight="noy" — close but "noy" alone is ambiguous
-   RIGHT: displayWord="vooey", referenceWord="gooey", highlight="ooey" — "ooey" sounds right, user adds V
-   RIGHT: displayWord="chow", referenceWord="cow", highlight="cow" — "cow" has the "ow" sound
-   RIGHT: displayWord="sin", referenceWord="sin", highlight="sin" — exact match
+Step 4: REFERENCE WORD — Common word where highlighted part sounds like displayWord.
 
-   When the displayWord starts with a consonant that isn't in the referenceWord, that's OK —
-   the user sees the consonant in the displayWord curve above and gets the vowel sound from the reference below.
-   Example: displayWord="vooey" with referenceWord="gooey" highlighted as "ooey" — 
-   user sees V-O-O-E-Y in the curve, sees "g**ooey**" below, combines V + ooey sound.
+Step 5: TONE — Look at the ACTUAL tone mark. NEVER default to flat.
+   ${languageName === "Vietnamese" ? `No mark → "flat" | á → "rising" | à → "falling" | ả → "dipping" | ã → "dipping" | ạ → "broken"
+   Check EVERY syllable. à≠á≠ả≠ã≠ạ are ALL different tones.` : ""}
 
-4. "highlightStart" and "highlightEnd" — Character positions marking which part of referenceWord matches the sound
-   - 0-indexed, inclusive start, exclusive end
-   - If referenceWord = displayWord (whole word matches), set highlightStart=0, highlightEnd=length of word
-   - The highlighted characters must SOUND like the displayWord (or its vowel core) when read aloud
-   - Example: referenceWord "denver", the sound is "den" → highlightStart=0, highlightEnd=3
-   - Example: referenceWord "boy", the sound is "oy" → highlightStart=1, highlightEnd=3
-   - Example: referenceWord "gooey", the sound is "ooey" → highlightStart=1, highlightEnd=5
-   - Example: referenceWord "sin", the whole word matches → highlightStart=0, highlightEnd=3
+━━━ OUTPUT ━━━
 
-━━━ HOW IT ALL WORKS TOGETHER ━━━
-
-The user sees:
-1. A tone curve graphic animating the letters of displayWord (rising, falling, etc.)
-2. Underneath the curve: the referenceWord with characters [highlightStart:highlightEnd] bolded
-3. This tells them: "Make the sound of the bold part of this word, with this pitch shape"
-
-━━━ EXAMPLE (English speaker learning Vietnamese "xin chào") ━━━
-
-Syllable 1 — "xin":
+Return ONLY valid JSON:
 {
-  "word": "xin",
-  "displayWord": "sin",
-  "tone": "flat",
-  "referenceWord": "sin",
-  "highlightStart": 0,
-  "highlightEnd": 3
-}
-→ Curve shows "sin" flat. Underneath: "**sin**" (whole word bolded, because it IS the sound)
-
-Syllable 2 — "chào":
-{
-  "word": "chào",
-  "displayWord": "chow",
-  "tone": "falling",
-  "referenceWord": "chow",
-  "highlightStart": 0,
-  "highlightEnd": 4
-}
-→ Curve shows "chow" falling. Underneath: "**chow**" (whole word bolded)
-
-━━━ EXAMPLE (English speaker learning Vietnamese "vui") ━━━
-{
-  "word": "vui",
-  "displayWord": "vooey",
-  "tone": "flat",
-  "referenceWord": "gooey",
-  "highlightStart": 1,
-  "highlightEnd": 5
-}
-→ Curve shows "vooey" flat. Underneath: "g**ooey**" — user sees the V in the curve, gets the vowel sound from "ooey"
-
-━━━ RESPONSE FORMAT ━━━
-
-Return ONLY valid JSON in this exact format:
-{
-  "native": "the phrase in ${languageName} script",
-  "phonetic": "full phrase phonetic using ${nativeLangLabel} letters only, no IPA",
+  "native": "phrase in ${languageName} script",
+  "phonetic": "phonetic in ${nativeLangLabel} letters",
   "syllables": [
     {
-      "word": "each word in native ${languageName} script",
-      "displayWord": "the sound in ${nativeLangLabel} letters, 1-6 chars, lowercase a-z only",
-      "tone": "one of: rising, falling, flat, dipping, high, low, broken",
-      "referenceWord": "a common ${nativeLangLabel} word where the highlighted portion SOUNDS like displayWord",
+      "word": "native script",
+      "displayWord": "SOUND in a-z, 1-6 chars",
+      "tone": "rising|falling|flat|dipping|high|low|broken",
+      "referenceWord": "common word with the sound",
       "highlightStart": 0,
-      "highlightEnd": 3
+      "highlightEnd": 3,
+      "soundsLike": "SOUND ONLY hint — NEVER mention tone/pitch/voice direction"
     }
   ]
 }
 
-Strict rules:
-- displayWord: ONLY plain a-z letters, no accents, no IPA, no native script, no spaces, 1-6 chars
-- referenceWord: MUST be a very common, simple ${nativeLangLabel} word (think elementary school vocabulary)
-- The highlighted part of referenceWord must SOUND like displayWord when spoken aloud — this is the #1 rule
-- tone: MUST be exactly one of the 7 values listed
-- For tonal languages (Vietnamese, Thai, Mandarin): be very precise about tone direction
-- highlightStart/highlightEnd: 0-indexed, marks the exact characters in referenceWord that match the sound
-- Keep it minimal — no tips, no meanings, no explanations. Just the pronunciation data.`;
+━━━ CRITICAL RULES FOR soundsLike ━━━
+- ONLY describe the mouth sound, NEVER the pitch/tone/voice direction
+- The tone curve graphic already shows pitch — soundsLike must NOT duplicate that
+- WRONG: "la but voice drops" / "kwa with rising tone" / "short and choppy"
+- RIGHT: "like 'la' in 'latte'" / "'kwa'" / "like 'moat' but shorter"
+- When a sound exactly matches a common word, just write the word in quotes: "'toy'" or "'sin'"
+- Keep under 10 words`;
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
